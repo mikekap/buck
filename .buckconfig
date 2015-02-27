@@ -1,7 +1,7 @@
 [java]
     ; Indicates that any folder named src or test
     ; are folders that contain Java code.
-    src_roots = src, test
+    src_roots = src, test, stuff
 [alias]
     buck = //programs:buck
     buck-win = //programs:buck-no-nailgun
@@ -12,6 +12,9 @@
     includes = //DEFS
 [download]
     maven_repo = https://repo1.maven.org/maven2
+[scala]
+    compiler = //stuff:scala-compiler
+    library = //stuff:scala-library
 [project]
     ; Directories that do not contain input files.
     ; All of these directories should also appear in the "ignore_dirs" list

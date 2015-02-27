@@ -81,6 +81,30 @@ java_library(
 )
 
 java_immutables_library(
+  name = 'scalac',
+  srcs = [
+    'Scalac.java',
+    'ExternalScalac.java',
+    'ScalacVersion.java',
+  ],
+  deps = [
+    ':packagefinder',
+    '//src/com/facebook/buck/event:event',
+    '//src/com/facebook/buck/io:io',
+    '//src/com/facebook/buck/log:log',
+    '//src/com/facebook/buck/model:model',
+    '//src/com/facebook/buck/rules:build_rule',
+    '//src/com/facebook/buck/step:step',
+    '//src/com/facebook/buck/util:exceptions',
+    '//src/com/facebook/buck/util:io',
+    '//src/com/facebook/buck/util:util',
+    '//src/com/facebook/buck/zip:unzip',
+    '//third-party/java/guava:guava',
+    '//third-party/java/jsr:jsr305',
+  ],
+  visibility = ['PUBLIC'],
+)
+java_immutables_library(
   name = 'javac',
   srcs = [
     'ExternalJavac.java',
@@ -118,10 +142,14 @@ java_immutables_library(
     'Javac.java',
     'JavaLibrary.java',
     'JavacOptions.java',
+    'Scalac.java',
+    'ScalacOptions.java',    
   ],
   deps = [
     ':classhash',
     ':javac',
+    ':scalac',
+    '//src/com/facebook/buck/cli:config',
     '//src/com/facebook/buck/io:io',
     '//src/com/facebook/buck/java/abi:protocol',
     '//src/com/facebook/buck/model:model',
@@ -160,6 +188,7 @@ java_library(
     'BuiltInJavac.java',
     'Classpaths.java',
     'DefaultJavaLibrary.java',
+    'DefaultScalaLibrary.java',
     'GwtModule.java',
     'JarFattener.java',
     'JavaBinary.java',
@@ -174,6 +203,7 @@ java_library(
     'KeystoreDescription.java',
     'PrebuiltJar.java',
     'PrebuiltJarDescription.java',
+    'ScalaLibraryDescription.java',
   ],
   resources = [
     'FatJar.java',
@@ -181,6 +211,7 @@ java_library(
   ],
   deps = [
     ':javac',
+    ':scalac',
     ':classhash',
     ':fat-jar-main',
     ':nativelinkable',
@@ -225,11 +256,13 @@ java_library(
     'JarDirectoryStep.java',
     'JarDirectoryStepHelper.java',
     'JavacStep.java',
+    'ScalacStep.java',
     'JUnitStep.java',
     'TestType.java',
   ],
   deps = [
     ':javac',
+    ':scalac',
     ':packagefinder',
     ':report-generator',
     ':support',

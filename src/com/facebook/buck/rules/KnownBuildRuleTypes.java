@@ -72,10 +72,12 @@ import com.facebook.buck.io.ProjectFilesystem;
 import com.facebook.buck.java.JavaBinaryDescription;
 import com.facebook.buck.java.JavaBuckConfig;
 import com.facebook.buck.java.JavaLibraryDescription;
+import com.facebook.buck.java.ScalaLibraryDescription;
 import com.facebook.buck.java.JavaTestDescription;
 import com.facebook.buck.java.JavacOptions;
 import com.facebook.buck.java.KeystoreDescription;
 import com.facebook.buck.java.PrebuiltJarDescription;
+import com.facebook.buck.java.ScalacOptions;
 import com.facebook.buck.log.Logger;
 import com.facebook.buck.model.Flavor;
 import com.facebook.buck.model.FlavorDomain;
@@ -410,6 +412,8 @@ public class KnownBuildRuleTypes {
     JavacOptions androidBinaryOptions = JavacOptions.builder(defaultJavacOptions)
         .build();
 
+    ScalacOptions scalacOptions = ScalacOptions.builderWithDefaultOptions(processExecutor, config).build();
+
     CxxBinaryDescription cxxBinaryDescription = new CxxBinaryDescription(
         cxxBuckConfig,
         defaultCxxPlatform,
@@ -479,6 +483,7 @@ public class KnownBuildRuleTypes {
     builder.register(new GwtBinaryDescription());
     builder.register(new IosPostprocessResourcesDescription());
     builder.register(new JavaBinaryDescription(defaultJavacOptions, defaultCxxPlatform));
+    builder.register(new ScalaLibraryDescription(scalacOptions));
     builder.register(new JavaLibraryDescription(defaultJavacOptions));
     builder.register(new JavaTestDescription(defaultJavacOptions, testRuleTimeoutMs));
     builder.register(new KeystoreDescription());

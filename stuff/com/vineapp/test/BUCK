@@ -1,0 +1,11 @@
+scala_library(
+    name='main',
+    srcs=['Main.scala'],
+)
+
+java_binary(
+    name='test',
+    deps=[':main'],
+    main_class='com.vineapp.test.Main'
+)
+
