@@ -17,11 +17,13 @@
 package com.facebook.buck.parser;
 
 import com.facebook.buck.io.ProjectFilesystem;
+import com.facebook.buck.log.Logger;
 import com.facebook.buck.model.BuildTarget;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
+import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Path;
@@ -31,6 +33,8 @@ import java.nio.file.attribute.BasicFileAttributes;
  * A specification used by the parser, via {@link TargetNodeSpec}, to match build files.
  */
 public class BuildFileSpec {
+
+  private static final Logger LOG = Logger.get(BuildFileSpec.class);
 
   // Base path where to find either a single build file or to recursively for many build files.
   private final Path basePath;
@@ -116,6 +120,11 @@ public class BuildFileSpec {
           @Override
           public FileVisitResult visitFileFailed(
               Path file, IOException exc) throws IOException {
+            if (exc instanceof FileSystemLoopException) {
+              LOG.error("Filesystem cycle detected at " + ((FileSystemLoopException) exc).getFile());
+              return FileVisitResult.CONTINUE;
+            }
+            
             throw exc;
           }
 
