@@ -418,7 +418,7 @@ public class DefaultScalaLibrary extends AbstractBuildRule
     return OUTPUT_TYPE;
   }
 
-  private ImmutableSortedSet<Path> getScalaSrcs() {
+  public ImmutableSortedSet<Path> getScalaSrcs() {
     return ImmutableSortedSet.copyOf(getResolver().getAllPaths(srcs));
   }
 

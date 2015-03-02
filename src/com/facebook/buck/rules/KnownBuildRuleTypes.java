@@ -74,6 +74,7 @@ import com.facebook.buck.java.JavaBuckConfig;
 import com.facebook.buck.java.JavaLibraryDescription;
 import com.facebook.buck.java.ScalaLibraryDescription;
 import com.facebook.buck.java.JavaTestDescription;
+import com.facebook.buck.java.ScalaTestDescription;
 import com.facebook.buck.java.JavacOptions;
 import com.facebook.buck.java.KeystoreDescription;
 import com.facebook.buck.java.PrebuiltJarDescription;
@@ -485,6 +486,7 @@ public class KnownBuildRuleTypes {
     builder.register(new JavaBinaryDescription(defaultJavacOptions, defaultCxxPlatform));
     builder.register(new ScalaLibraryDescription(scalacOptions));
     builder.register(new JavaLibraryDescription(defaultJavacOptions));
+    builder.register(new ScalaTestDescription(scalacOptions, testRuleTimeoutMs));
     builder.register(new JavaTestDescription(defaultJavacOptions, testRuleTimeoutMs));
     builder.register(new KeystoreDescription());
     builder.register(new NdkLibraryDescription(ndkVersion, ndkCxxPlatforms));

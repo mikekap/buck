@@ -161,8 +161,8 @@ public abstract class ScalacOptions implements RuleKeyAppendable {
       return ImmutableScalacOptions.builder()
           .setProcessExecutor(processExecutor)
           .setTargetLevel("jvm-1.7")
-          .setScalacPath(config.getRequiredSourcePath("scala", "compiler"))
-          .setLibraryDep(config.getRequiredBuildTarget("scala", "library"));
+          .setScalacPath(config.getSourcePath("scala", "compiler"))
+          .setLibraryDep(config.getBuildTarget("scala", "library"));
   }
 
   public static ImmutableScalacOptions.Builder builder(ScalacOptions options) {

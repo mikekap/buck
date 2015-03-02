@@ -204,6 +204,8 @@ java_library(
     'PrebuiltJar.java',
     'PrebuiltJarDescription.java',
     'ScalaLibraryDescription.java',
+    'ScalaTest.java',
+    'ScalaTestDescription.java',
   ],
   resources = [
     'FatJar.java',
