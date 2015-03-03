@@ -22,6 +22,7 @@ import com.facebook.buck.rules.RuleKeyAppendable;
 import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.util.HumanReadableException;
 import com.facebook.buck.util.immutables.BuckStyleImmutable;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
@@ -47,6 +48,9 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
   // Native libraries to include in the package.
   @Value.Parameter
   public abstract Map<Path, SourcePath> getNativeLibraries();
+
+  @Value.Parameter
+  public abstract Optional<Boolean> isZipSafe();
 
   @Override
   public final RuleKey.Builder appendToRuleKey(RuleKey.Builder builder, String key) {
@@ -87,6 +91,7 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
     private final ImmutableMap.Builder<Path, SourcePath> modules = ImmutableMap.builder();
     private final ImmutableMap.Builder<Path, SourcePath> resources = ImmutableMap.builder();
     private final ImmutableMap.Builder<Path, SourcePath> nativeLibraries = ImmutableMap.builder();
+    private Optional<Boolean> zipSafe = Optional.absent();
 
     // Bookkeeping used to for error handling in the presence of duplicate
     // entries.  These data structures map the components named above to the
@@ -157,6 +162,16 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
       addModules(other.getModules(), from);
       addResources(other.getResources(), from);
       addNativeLibraries(other.getNativeLibraries(), from);
+      addZipSafe(other.isZipSafe());
+      return this;
+    }
+
+    public Builder addZipSafe(Optional<Boolean> zipSafe) {
+      if (!this.zipSafe.isPresent() && !zipSafe.isPresent()) {
+        return this;
+      }
+      
+      this.zipSafe = Optional.of(this.zipSafe.or(true) && zipSafe.or(true));
       return this;
     }
 
@@ -164,7 +179,8 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
       return ImmutablePythonPackageComponents.of(
           modules.build(),
           resources.build(),
-          nativeLibraries.build());
+          nativeLibraries.build(),
+          zipSafe);
     }
 
   }

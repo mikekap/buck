@@ -36,6 +36,7 @@ import com.facebook.buck.rules.PathSourcePath;
 import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.step.Step;
+import com.google.common.base.Optional;
 import com.facebook.buck.testutil.FakeProjectFilesystem;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -143,7 +144,8 @@ public class CxxLibraryTest {
         ImmutableMap.<Path, SourcePath>of(),
         ImmutableMap.<Path, SourcePath>of(
             Paths.get(sharedLibrarySoname),
-            new PathSourcePath(projectFilesystem, sharedLibraryOutput)));
+            new PathSourcePath(projectFilesystem, sharedLibraryOutput)),
+        Optional.<Boolean>absent());
     assertEquals(
         expectedPythonPackageComponents,
         cxxLibrary.getPythonPackageComponents(cxxPlatform));

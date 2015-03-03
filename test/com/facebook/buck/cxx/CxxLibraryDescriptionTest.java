@@ -44,6 +44,7 @@ import com.facebook.buck.rules.coercer.SourceWithFlags;
 import com.facebook.buck.shell.GenruleBuilder;
 import com.facebook.buck.testutil.FakeProjectFilesystem;
 import com.facebook.buck.testutil.TargetGraphFactory;
+import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -152,7 +153,8 @@ public class CxxLibraryDescriptionTest {
         return ImmutablePythonPackageComponents.of(
             ImmutableMap.<Path, SourcePath>of(),
             ImmutableMap.<Path, SourcePath>of(),
-            ImmutableMap.<Path, SourcePath>of());
+            ImmutableMap.<Path, SourcePath>of(),
+            Optional.<Boolean>absent());
       }
 
       @Override
@@ -530,7 +532,8 @@ public class CxxLibraryDescriptionTest {
             ImmutableMap.<Path, SourcePath>of(),
             ImmutableMap.<Path, SourcePath>of(
                 Paths.get(sharedLibrarySoname),
-                new PathSourcePath(getProjectFilesystem(), sharedLibraryOutput)));
+                new PathSourcePath(getProjectFilesystem(), sharedLibraryOutput)),
+            Optional.<Boolean>absent());
       }
 
       @Override
@@ -813,7 +816,8 @@ public class CxxLibraryDescriptionTest {
         ImmutableMap.<Path, SourcePath>of(),
         ImmutableMap.<Path, SourcePath>of(
             Paths.get(CxxDescriptionEnhancer.getSharedLibrarySoname(target, cxxPlatform)),
-            new BuildTargetSourcePath(projectFilesystem, sharedRule.getBuildTarget())));
+            new BuildTargetSourcePath(projectFilesystem, sharedRule.getBuildTarget())),
+        Optional.<Boolean>absent());
     assertEquals(
         expectedPythonPackageComponents,
         rule.getPythonPackageComponents(cxxPlatform));

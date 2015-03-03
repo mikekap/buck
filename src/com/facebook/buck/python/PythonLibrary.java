@@ -28,6 +28,7 @@ import com.facebook.buck.rules.RuleKey;
 import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.step.Step;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -42,15 +43,18 @@ public class PythonLibrary extends AbstractBuildRule implements PythonPackagable
 
   private final ImmutableMap<Path, SourcePath> srcs;
   private final ImmutableMap<Path, SourcePath> resources;
+  private final Optional<Boolean> zipSafe;
 
   public PythonLibrary(
       BuildRuleParams params,
       SourcePathResolver resolver,
       ImmutableMap<Path, SourcePath> srcs,
-      ImmutableMap<Path, SourcePath> resources) {
+      ImmutableMap<Path, SourcePath> resources,
+      Optional<Boolean> zipSafe) {
     super(params, resolver);
     this.srcs = srcs;
     this.resources = resources;
+    this.zipSafe = zipSafe;
   }
 
   @Nullable
@@ -72,7 +76,8 @@ public class PythonLibrary extends AbstractBuildRule implements PythonPackagable
     return ImmutablePythonPackageComponents.of(
         srcs,
         resources,
-        ImmutableMap.<Path, SourcePath>of());
+        ImmutableMap.<Path, SourcePath>of(),
+        zipSafe);
   }
 
   @Override

@@ -188,7 +188,8 @@ public class PrebuiltCxxLibrary extends AbstractCxxLibrary {
     return ImmutablePythonPackageComponents.of(
         /* modules */ ImmutableMap.<Path, SourcePath>of(),
         /* resources */ ImmutableMap.<Path, SourcePath>of(),
-        nativeLibraries);
+        nativeLibraries,
+        /* zipSafe */ Optional.<Boolean>absent());
   }
 
   @Override

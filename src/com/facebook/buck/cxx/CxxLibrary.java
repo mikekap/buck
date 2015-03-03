@@ -162,7 +162,8 @@ public class CxxLibrary extends AbstractCxxLibrary {
             Paths.get(sharedLibrarySoname),
             new BuildTargetSourcePath(
                 sharedLibraryBuildRule.getProjectFilesystem(),
-                sharedLibraryBuildRule.getBuildTarget())));
+                sharedLibraryBuildRule.getBuildTarget())),
+        /* zipSafe */ Optional.<Boolean>absent());
   }
 
   @Override

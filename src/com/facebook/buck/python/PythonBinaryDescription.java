@@ -96,7 +96,8 @@ public class PythonBinaryDescription implements Description<PythonBinaryDescript
     PythonPackageComponents binaryPackageComponents = ImmutablePythonPackageComponents.of(
         /* modules */ ImmutableMap.of(mainModule, args.main),
         /* resources */ ImmutableMap.<Path, SourcePath>of(),
-        /* nativeLibraries */ ImmutableMap.<Path, SourcePath>of());
+        /* nativeLibraries */ ImmutableMap.<Path, SourcePath>of(),
+        /* zipSafe */ args.zipSafe);
     PythonPackageComponents allPackageComponents = PythonUtil.getAllComponents(
         params,
         binaryPackageComponents,
@@ -122,6 +123,7 @@ public class PythonBinaryDescription implements Description<PythonBinaryDescript
     public SourcePath main;
     public Optional<ImmutableSortedSet<BuildTarget>> deps;
     public Optional<String> baseModule;
+    public Optional<Boolean> zipSafe;
   }
 
 }
