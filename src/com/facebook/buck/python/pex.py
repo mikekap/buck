@@ -118,6 +118,10 @@ def main():
             # NOTE(agallagher): see rationale above.
             pex_builder.add_resource(dereference_symlinks(src), dst)
 
+        # Add requirements listed in the manifest.
+        for req in manifest.get('requirements', []):
+            pex_builder.add_dist_location(req)
+
         # Generate the PEX file.
         pex_builder.build(output)
 

@@ -55,6 +55,9 @@ public class PexStep extends ShellStep {
   // The map of native libraries to include in the PEX.
   private final ImmutableMap<Path, Path> nativeLibraries;
 
+  // The list of requirements to add to the PEX.
+  private final ImmutableList<Path> requirements;
+
   private final boolean zipSafe;
 
   public PexStep(
@@ -66,6 +69,7 @@ public class PexStep extends ShellStep {
       ImmutableMap<Path, Path> modules,
       ImmutableMap<Path, Path> resources,
       ImmutableMap<Path, Path> nativeLibraries,
+      ImmutableList<Path> requirements,
       boolean zipSafe) {
     this.pathToPex = pathToPex;
     this.pythonPath = pythonPath;
@@ -75,6 +79,7 @@ public class PexStep extends ShellStep {
     this.modules = modules;
     this.resources = resources;
     this.nativeLibraries = nativeLibraries;
+    this.requirements = requirements;
     this.zipSafe = zipSafe;
   }
 
@@ -110,11 +115,16 @@ public class PexStep extends ShellStep {
     for (ImmutableMap.Entry<Path, Path> ent : nativeLibraries.entrySet()) {
       nativeLibrariesBuilder.put(ent.getKey().toString(), ent.getValue().toString());
     }
+    ImmutableList.Builder<String> requirementsBuilder = ImmutableList.builder();
+    for (Path req : requirements) {
+      requirementsBuilder.add(req.toString());
+    }
     try {
       return Optional.of(MAPPER.writeValueAsString(ImmutableMap.of(
           "modules", modulesBuilder.build(),
           "resources", resourcesBuilder.build(),
-          "nativeLibraries", nativeLibrariesBuilder.build())));
+          "nativeLibraries", nativeLibrariesBuilder.build(),
+          "requirements", requirementsBuilder.build())));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

@@ -92,6 +92,7 @@ import com.facebook.buck.python.PythonBinaryDescription;
 import com.facebook.buck.python.PythonBuckConfig;
 import com.facebook.buck.python.PythonEnvironment;
 import com.facebook.buck.python.PythonLibraryDescription;
+import com.facebook.buck.python.PythonRequirementDescription;
 import com.facebook.buck.python.PythonTestDescription;
 import com.facebook.buck.shell.ExportFileDescription;
 import com.facebook.buck.shell.GenruleDescription;
@@ -505,6 +506,7 @@ public class KnownBuildRuleTypes {
             defaultCxxPlatform,
             cxxPlatforms));
     builder.register(new PythonLibraryDescription());
+    builder.register(new PythonRequirementDescription());
     builder.register(
         new PythonTestDescription(
             projectFilesystem,

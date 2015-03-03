@@ -35,27 +35,22 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
-public class PythonLibrary extends AbstractBuildRule implements PythonPackagable {
+public class PythonRequirement extends AbstractBuildRule implements PythonPackagable {
 
   private static final BuildableProperties OUTPUT_TYPE = new BuildableProperties(LIBRARY);
 
-  private final ImmutableMap<Path, SourcePath> srcs;
-  private final ImmutableMap<Path, SourcePath> resources;
-  private final Optional<Boolean> zipSafe;
+  private final List<SourcePath> srcs;
 
-  public PythonLibrary(
+  public PythonRequirement(
       BuildRuleParams params,
       SourcePathResolver resolver,
-      ImmutableMap<Path, SourcePath> srcs,
-      ImmutableMap<Path, SourcePath> resources,
-      Optional<Boolean> zipSafe) {
+      List<SourcePath> srcs) {
     super(params, resolver);
     this.srcs = srcs;
-    this.resources = resources;
-    this.zipSafe = zipSafe;
   }
 
   @Nullable
@@ -75,11 +70,11 @@ public class PythonLibrary extends AbstractBuildRule implements PythonPackagable
   @Override
   public PythonPackageComponents getPythonPackageComponents(CxxPlatform cxxPlatform) {
     return ImmutablePythonPackageComponents.of(
-        srcs,
-        resources,
         ImmutableMap.<Path, SourcePath>of(),
-        ImmutableSet.<SourcePath>of(),
-        zipSafe);
+        ImmutableMap.<Path, SourcePath>of(),
+        ImmutableMap.<Path, SourcePath>of(),
+        ImmutableSet.copyOf(srcs),
+        Optional.<Boolean>absent());
   }
 
   @Override
@@ -97,10 +92,6 @@ public class PythonLibrary extends AbstractBuildRule implements PythonPackagable
   @Override
   public BuildableProperties getProperties() {
     return OUTPUT_TYPE;
-  }
-
-  public ImmutableMap<Path, SourcePath> getSrcs() {
-    return srcs;
   }
 
 }

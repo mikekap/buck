@@ -254,6 +254,7 @@ public class PythonTestDescription implements Description<PythonTestDescription.
             .build(),
         resources,
         ImmutableMap.<Path, SourcePath>of(),
+        ImmutableSet.<SourcePath>of(),
         args.zipSafe);
     PythonPackageComponents allComponents =
         PythonUtil.getAllComponents(params, testComponents, cxxPlatform);

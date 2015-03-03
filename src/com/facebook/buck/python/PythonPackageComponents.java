@@ -24,6 +24,7 @@ import com.facebook.buck.util.HumanReadableException;
 import com.facebook.buck.util.immutables.BuckStyleImmutable;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 
@@ -32,6 +33,7 @@ import org.immutables.value.Value;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @Value.Immutable(builder = false)
 @BuckStyleImmutable
@@ -48,6 +50,10 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
   // Native libraries to include in the package.
   @Value.Parameter
   public abstract Map<Path, SourcePath> getNativeLibraries();
+
+  // PyPI dependencies in this package.
+  @Value.Parameter
+  public abstract Set<SourcePath> getRequirements();
 
   @Value.Parameter
   public abstract Optional<Boolean> isZipSafe();
@@ -75,7 +81,8 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
     return Iterables.<SourcePath>concat(
         ImmutableSortedSet.copyOf(getModules().values()),
         ImmutableSortedSet.copyOf(getResources().values()),
-        ImmutableSortedSet.copyOf(getNativeLibraries().values()));
+        ImmutableSortedSet.copyOf(getNativeLibraries().values()),
+        ImmutableSortedSet.copyOf(getRequirements()));
   }
 
   /**
@@ -91,6 +98,7 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
     private final ImmutableMap.Builder<Path, SourcePath> modules = ImmutableMap.builder();
     private final ImmutableMap.Builder<Path, SourcePath> resources = ImmutableMap.builder();
     private final ImmutableMap.Builder<Path, SourcePath> nativeLibraries = ImmutableMap.builder();
+    private final ImmutableSet.Builder<SourcePath> requirements = ImmutableSet.builder();
     private Optional<Boolean> zipSafe = Optional.absent();
 
     // Bookkeeping used to for error handling in the presence of duplicate
@@ -158,10 +166,16 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
       return add("native library", nativeLibraries, nativeLibrarySources, sources, from);
     }
 
+    public Builder addRequirements(Set<SourcePath> sources) {
+      requirements.addAll(sources);
+      return this;
+    }
+
     public Builder addComponent(PythonPackageComponents other, BuildTarget from) {
       addModules(other.getModules(), from);
       addResources(other.getResources(), from);
       addNativeLibraries(other.getNativeLibraries(), from);
+      addRequirements(other.getRequirements());
       addZipSafe(other.isZipSafe());
       return this;
     }
@@ -170,7 +184,7 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
       if (!this.zipSafe.isPresent() && !zipSafe.isPresent()) {
         return this;
       }
-      
+
       this.zipSafe = Optional.of(this.zipSafe.or(true) && zipSafe.or(true));
       return this;
     }
@@ -180,6 +194,7 @@ public abstract class PythonPackageComponents implements RuleKeyAppendable {
           modules.build(),
           resources.build(),
           nativeLibraries.build(),
+          requirements.build(),
           zipSafe);
     }
 

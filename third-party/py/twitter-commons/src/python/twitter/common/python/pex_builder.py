@@ -135,13 +135,17 @@ class PEXBuilder(object):
     return CacheHelper.dir_hash(path)
 
   def _add_dist_zip(self, path, dist_name):
-    with open_zip(path) as zf:
-      for name in zf.namelist():
-        if name.endswith('/'):
-          continue
-        target = os.path.join(self._pex_info.internal_cache, dist_name, name)
-        self._chroot.write(zf.read(name), target)
-      return CacheHelper.zip_hash(zf)
+    try:
+      with open_zip(path) as zf:
+        for name in zf.namelist():
+          if name.endswith('/'):
+            continue
+          target = os.path.join(self._pex_info.internal_cache, dist_name, name)
+          self._chroot.write(zf.read(name), target)
+        return CacheHelper.zip_hash(zf)
+    except Exception:
+      print path + ' is not a zip file'
+      raise
 
   def _prepare_code_hash(self):
     self._pex_info.code_hash = CacheHelper.pex_hash(self._chroot.path())

@@ -125,6 +125,7 @@ public final class FakeCxxLibrary extends AbstractCxxLibrary {
         ImmutableMap.<Path, SourcePath>of(
             Paths.get(sharedLibrarySoname),
             new PathSourcePath(getProjectFilesystem(), sharedLibraryOutput)),
+        ImmutableSet.<SourcePath>of(),
         Optional.<Boolean>absent());
   }
 
