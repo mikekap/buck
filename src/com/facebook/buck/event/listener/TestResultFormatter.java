@@ -61,6 +61,8 @@ public class TestResultFormatter {
 
   /** Writes a detailed summary that ends with a trailing newline. */
   public void reportResult(ImmutableList.Builder<String> addTo, TestResults results) {
+    boolean haveFailures = false;
+    
     for (TestCaseSummary testCase : results.getTestCases()) {
       addTo.add(testCase.getOneLineSummary(results.getDependenciesPassTheirTests(), ansi));
 
@@ -81,6 +83,14 @@ public class TestResultFormatter {
         if (!testResult.isSuccess() || (
             isTreatingAssumptionsAsErrors &&
             testResult.getType().equals(ResultType.ASSUMPTION_VIOLATION))) {
+          haveFailures = true;
+        }
+      }
+    }
+
+    if (haveFailures) {
+      for (TestCaseSummary testCase : results.getTestCases()) {
+        for (TestResultSummary testResult : testCase.getTestResults()) {
           reportResultSummary(addTo, testResult);
         }
       }
