@@ -52,6 +52,7 @@ import com.facebook.buck.apple.XcodeWorkspaceConfigDescription;
 import com.facebook.buck.cli.BuckConfig;
 import com.facebook.buck.cxx.CxxBinaryDescription;
 import com.facebook.buck.cxx.CxxBuckConfig;
+import com.facebook.buck.cxx.CxxExtensionLibraryDescription;
 import com.facebook.buck.cxx.CxxLibraryDescription;
 import com.facebook.buck.cxx.CxxPlatform;
 import com.facebook.buck.cxx.CxxPythonExtensionDescription;
@@ -466,6 +467,7 @@ public class KnownBuildRuleTypes {
     builder.register(new BuckExtensionDescription(defaultJavacOptions));
     builder.register(new CoreDataModelDescription());
     builder.register(cxxBinaryDescription);
+    builder.register(new CxxExtensionLibraryDescription(cxxBuckConfig, defaultCxxPlatform, cxxPlatforms));
     builder.register(cxxLibraryDescription);
     builder.register(new CxxPythonExtensionDescription(cxxBuckConfig, cxxPlatforms));
     builder.register(new CxxTestDescription(cxxBuckConfig, defaultCxxPlatform, cxxPlatforms));

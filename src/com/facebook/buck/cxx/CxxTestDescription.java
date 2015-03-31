@@ -87,7 +87,7 @@ public class CxxTestDescription implements
     }
 
     // Generate the link rule that builds the test binary.
-    CxxLink cxxLink = CxxDescriptionEnhancer.createBuildRulesForCxxBinaryDescriptionArg(
+    CxxLink cxxLink = CxxDescriptionEnhancer.createBinaryBuildRulesForCxxConstructorArg(
         params,
         resolver,
         cxxPlatform,

@@ -169,7 +169,7 @@ public class CxxBinaryDescription implements
     }
 
     CxxLink cxxLink =
-        CxxDescriptionEnhancer.createBuildRulesForCxxBinaryDescriptionArg(
+        CxxDescriptionEnhancer.createBinaryBuildRulesForCxxConstructorArg(
             params,
             resolver,
             cxxPlatform,

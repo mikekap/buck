@@ -743,12 +743,20 @@ public class CxxDescriptionEnhancer {
     return BuildTarget.builder(target).addFlavors(CXX_LINK_BINARY_FLAVOR).build();
   }
 
-  public static CxxLink createBuildRulesForCxxBinaryDescriptionArg(
+  public static CxxLink createBuildRulesForCxxConstructorArg(
       BuildRuleParams params,
       BuildRuleResolver resolver,
       CxxPlatform cxxPlatform,
-      CxxBinaryDescription.Arg args,
-      CxxSourceRuleFactory.Strategy compileStrategy) {
+      CxxConstructorArg args,
+      CxxSourceRuleFactory.Strategy compileStrategy,
+      CxxSourceRuleFactory.PicType picType,
+      Linker.LinkableDepType linkDepType,
+      Linker.LinkType linkType,
+      BuildTarget linkTarget,
+      Optional<String> soname,
+      Path output) {
+
+    Preconditions.checkArgument(!soname.isPresent() || linkType == Linker.LinkType.SHARED);
 
     ImmutableMap<String, CxxSource> srcs = parseCxxSources(params, resolver, args);
     ImmutableMap<Path, SourcePath> headers = parseHeaders(params, resolver, args);
@@ -813,11 +821,10 @@ public class CxxDescriptionEnhancer {
                 cxxPlatform.getFlavor()),
             compileStrategy,
             sources,
-            CxxSourceRuleFactory.PicType.PDC);
+            picType);
 
     // Generate the final link rule.  We use the top-level target as the link rule's
     // target, so that it corresponds to the actual binary we build.
-    Path output = getOutputPath(params.getBuildTarget());
     CxxLink cxxLink = CxxLinkableEnhancer.createCxxLinkableBuildRule(
         cxxPlatform,
         params,
@@ -827,15 +834,36 @@ public class CxxDescriptionEnhancer {
             args.linkerFlags,
             args.platformLinkerFlags,
             cxxPlatform.getFlavor()),
-        createCxxLinkTarget(params.getBuildTarget()),
-        Linker.LinkType.EXECUTABLE,
-        Optional.<String>absent(),
+        linkTarget,
+        linkType,
+        soname,
         output,
         objects,
-        Linker.LinkableDepType.STATIC,
+        linkDepType,
         params.getDeps());
-    resolver.addToIndex(cxxLink);
 
+    return cxxLink;
+  }
+
+  public static CxxLink createBinaryBuildRulesForCxxConstructorArg(
+      BuildRuleParams params,
+      BuildRuleResolver resolver,
+      CxxPlatform cxxPlatform,
+      CxxConstructorArg args,
+      CxxSourceRuleFactory.Strategy compileStrategy) {
+    CxxLink cxxLink = createBuildRulesForCxxConstructorArg(
+        params,
+        resolver,
+        cxxPlatform,
+        args,
+        compileStrategy,
+        CxxSourceRuleFactory.PicType.PDC,
+        Linker.LinkableDepType.STATIC,
+        Linker.LinkType.EXECUTABLE,
+        createCxxLinkTarget(params.getBuildTarget()),
+        Optional.<String>absent(),
+        getOutputPath(params.getBuildTarget()));
+    resolver.addToIndex(cxxLink);
     return cxxLink;
   }
 
