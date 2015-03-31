@@ -67,6 +67,7 @@ public class CxxLibraryDescription implements
     EXPORTED_HEADER_MAP_FILE,
     SHARED,
     STATIC,
+    STATIC_PIC
   }
 
   public static final BuildRuleType TYPE = BuildRuleType.of("cxx_library");
@@ -85,6 +86,7 @@ public class CxxLibraryDescription implements
                   Type.EXPORTED_HEADER_MAP_FILE)
               .put(CxxDescriptionEnhancer.SHARED_FLAVOR, Type.SHARED)
               .put(CxxDescriptionEnhancer.STATIC_FLAVOR, Type.STATIC)
+              .put(CxxDescriptionEnhancer.STATIC_PIC_FLAVOR, Type.STATIC_PIC)
               .build());
 
   private final CxxBuckConfig cxxBuckConfig;
@@ -195,6 +197,7 @@ public class CxxLibraryDescription implements
       BuildRuleResolver ruleResolver,
       SourcePathResolver pathResolver,
       CxxPlatform cxxPlatform,
+      CxxSourceRuleFactory.PicType picType,
       ImmutableMap<String, SourcePath> lexSources,
       ImmutableMap<String, SourcePath> yaccSources,
       ImmutableMultimap<CxxSource.Type, String> preprocessorFlags,
@@ -206,7 +209,7 @@ public class CxxLibraryDescription implements
       ImmutableList<Path> frameworkSearchPaths,
       CxxSourceRuleFactory.Strategy compileStrategy) {
 
-    // Create rules for compiling the non-PIC object files.
+    // Create rules for compiling the object files.
     ImmutableList<SourcePath> objects = requireObjects(
         params,
         ruleResolver,
@@ -222,17 +225,28 @@ public class CxxLibraryDescription implements
         sources,
         frameworkSearchPaths,
         compileStrategy,
-        CxxSourceRuleFactory.PicType.PDC);
+        picType);
 
     // Write a build rule to create the archive for this C/C++ library.
-    BuildTarget staticTarget =
-        CxxDescriptionEnhancer.createStaticLibraryBuildTarget(
-            params.getBuildTarget(),
-            cxxPlatform.getFlavor());
-    Path staticLibraryPath =
-        CxxDescriptionEnhancer.getStaticLibraryPath(
-            params.getBuildTarget(),
-            cxxPlatform.getFlavor());
+    BuildTarget staticTarget;
+    Path staticLibraryPath;
+    if (picType == CxxSourceRuleFactory.PicType.PIC) {
+      staticTarget = CxxDescriptionEnhancer.createStaticPicLibraryBuildTarget(
+          params.getBuildTarget(),
+          cxxPlatform.getFlavor());
+
+      staticLibraryPath = CxxDescriptionEnhancer.getStaticPicLibraryPath(
+          params.getBuildTarget(),
+          cxxPlatform.getFlavor());
+    } else {
+      staticTarget = CxxDescriptionEnhancer.createStaticLibraryBuildTarget(
+          params.getBuildTarget(),
+          cxxPlatform.getFlavor());
+
+      staticLibraryPath = CxxDescriptionEnhancer.getStaticLibraryPath(
+          params.getBuildTarget(),
+          cxxPlatform.getFlavor());
+    }
     Archive staticLibraryBuildRule = Archives.createArchiveRule(
         pathResolver,
         staticTarget,
@@ -458,6 +472,51 @@ public class CxxLibraryDescription implements
         resolver,
         new SourcePathResolver(resolver),
         cxxPlatform,
+        CxxSourceRuleFactory.PicType.PDC,
+        CxxDescriptionEnhancer.parseLexSources(params, resolver, args),
+        CxxDescriptionEnhancer.parseYaccSources(params, resolver, args),
+        ImmutableMultimap.<CxxSource.Type, String>builder()
+            .putAll(
+                CxxFlags.getLanguageFlags(
+                    args.preprocessorFlags,
+                    args.platformPreprocessorFlags,
+                    args.langPreprocessorFlags,
+                    cxxPlatform.getFlavor()))
+            .putAll(
+                CxxFlags.getLanguageFlags(
+                    args.exportedPreprocessorFlags,
+                    args.exportedPlatformPreprocessorFlags,
+                    args.exportedLangPreprocessorFlags,
+                    cxxPlatform.getFlavor()))
+            .build(),
+        args.prefixHeaders.get(),
+        CxxDescriptionEnhancer.parseHeaders(params, resolver, args),
+        CxxDescriptionEnhancer.parseExportedHeaders(params, resolver, args),
+        CxxFlags.getFlags(
+            args.compilerFlags,
+            args.platformCompilerFlags,
+            cxxPlatform.getFlavor()),
+        CxxDescriptionEnhancer.parseCxxSources(params, resolver, args),
+        args.frameworkSearchPaths.get(),
+        compileStrategy);
+  }
+
+  /**
+   * @return a {@link Archive} rule which builds a position-independent static library version
+   * of this C/C++ library.
+   */
+  public static <A extends Arg> Archive createStaticPicLibraryBuildRule(
+      BuildRuleParams params,
+      BuildRuleResolver resolver,
+      CxxPlatform cxxPlatform,
+      A args,
+      CxxSourceRuleFactory.Strategy compileStrategy) {
+    return createStaticLibrary(
+        params,
+        resolver,
+        new SourcePathResolver(resolver),
+        cxxPlatform,
+        CxxSourceRuleFactory.PicType.PIC,
         CxxDescriptionEnhancer.parseLexSources(params, resolver, args),
         CxxDescriptionEnhancer.parseYaccSources(params, resolver, args),
         ImmutableMultimap.<CxxSource.Type, String>builder()
@@ -621,6 +680,13 @@ public class CxxLibraryDescription implements
             args);
       } else if (type.get().getValue().equals(Type.SHARED)) {
         return createSharedLibraryBuildRule(
+            typeParams,
+            resolver,
+            platform.get().getValue(),
+            args,
+            compileStrategy);
+      } else if (type.get().getValue().equals(Type.STATIC_PIC)) {
+        return createStaticPicLibraryBuildRule(
             typeParams,
             resolver,
             platform.get().getValue(),

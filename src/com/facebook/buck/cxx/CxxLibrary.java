@@ -121,6 +121,21 @@ public class CxxLibrary extends AbstractCxxLibrary {
           cxxPlatform.getFlavor(),
           CxxDescriptionEnhancer.SHARED_FLAVOR);
       linkerArgsBuilder.add(sharedLibraryPath.toString());
+    } else if (type == Linker.LinkableDepType.STATIC_PIC) {
+      libraryRule = CxxDescriptionEnhancer.requireBuildRule(
+          params,
+          ruleResolver,
+          cxxPlatform.getFlavor(),
+          CxxDescriptionEnhancer.STATIC_PIC_FLAVOR);
+      Path staticLibraryPath = CxxDescriptionEnhancer.getStaticPicLibraryPath(
+          getBuildTarget(),
+          cxxPlatform.getFlavor());
+      if (linkWhole) {
+        Linker linker = cxxPlatform.getLd();
+        linkerArgsBuilder.addAll(linker.linkWhole(staticLibraryPath.toString()));
+      } else {
+        linkerArgsBuilder.add(staticLibraryPath.toString());
+      }
     } else {
       libraryRule = CxxDescriptionEnhancer.requireBuildRule(
           params,

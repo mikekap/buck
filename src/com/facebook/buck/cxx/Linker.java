@@ -61,6 +61,10 @@ public interface Linker {
     // static libraries, libfoo.a).
     STATIC,
 
+    // Provide input suitable for statically linking this linkable (e.g. return references to
+    // static libraries, libfoo.a), but with PIC enabled.
+    STATIC_PIC,
+
     // Provide input suitable for dynamically linking this linkable (e.g. return references to
     // shared libraries, libfoo.so).
     SHARED

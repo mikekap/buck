@@ -66,6 +66,7 @@ public class CxxDescriptionEnhancer {
   public static final Flavor EXPORTED_HEADER_MAP_FILE_FLAVOR =
       ImmutableFlavor.of("exported-header-map-file");
   public static final Flavor STATIC_FLAVOR = ImmutableFlavor.of("static");
+  public static final Flavor STATIC_PIC_FLAVOR = ImmutableFlavor.of("static-pic");
   public static final Flavor SHARED_FLAVOR = ImmutableFlavor.of("shared");
 
   public static final Flavor CXX_LINK_BINARY_FLAVOR = ImmutableFlavor.of("binary");
@@ -695,6 +696,12 @@ public class CxxDescriptionEnhancer {
     return BuildTarget.builder(target).addFlavors(platform).addFlavors(STATIC_FLAVOR).build();
   }
 
+  public static BuildTarget createStaticPicLibraryBuildTarget(
+      BuildTarget target,
+      Flavor platform) {
+    return BuildTarget.builder(target).addFlavors(platform).addFlavors(STATIC_PIC_FLAVOR).build();
+  }
+
   public static BuildTarget createSharedLibraryBuildTarget(
       BuildTarget target,
       Flavor platform) {
@@ -706,6 +713,14 @@ public class CxxDescriptionEnhancer {
       Flavor platform) {
     String name = String.format("lib%s.a", target.getShortName());
     return BuildTargets.getScratchPath(createStaticLibraryBuildTarget(target, platform), "%s")
+        .resolve(name);
+  }
+
+  public static Path getStaticPicLibraryPath(
+      BuildTarget target,
+      Flavor platform) {
+    String name = String.format("lib%s.a", target.getShortName());
+    return BuildTargets.getScratchPath(createStaticPicLibraryBuildTarget(target, platform), "%s")
         .resolve(name);
   }
 
