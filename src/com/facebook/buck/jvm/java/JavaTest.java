@@ -149,7 +149,6 @@ public class JavaTest
       Map<String, String> nativeLibsEnvironment,
       ImmutableSet<BuildRule> sourceUnderTest,
       Optional<Path> resourcesRoot,
-      Optional<String> mavenCoords,
       Optional<Long> testRuleTimeoutMs,
       boolean runTestSeparately,
       Optional<Level> stdOutLogLevel,
@@ -169,7 +168,7 @@ public class JavaTest
         addtionalClasspathEntries,
         compileStepFactory,
         resourcesRoot,
-        mavenCoords,
+        /* mavenCoords */ Optional.<String>absent(),
         /* tests */ ImmutableSortedSet.<BuildTarget>of());
     this.vmArgs = ImmutableList.copyOf(vmArgs);
     this.nativeLibsEnvironment = ImmutableMap.copyOf(nativeLibsEnvironment);

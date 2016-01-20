@@ -28,9 +28,9 @@ import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
 import com.facebook.buck.rules.BuildRuleType;
-import com.facebook.buck.rules.BuildRules;
 import com.facebook.buck.rules.BuildTargetSourcePath;
 import com.facebook.buck.rules.Description;
+import com.facebook.buck.rules.Hint;
 import com.facebook.buck.rules.ImplicitDepsInferringDescription;
 import com.facebook.buck.rules.Label;
 import com.facebook.buck.rules.SourcePath;
@@ -44,7 +44,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
 
 import java.nio.file.Path;
 import java.util.logging.Level;
@@ -120,13 +119,7 @@ public class ScalaTestDescription implements Description<ScalaTestDescription.Ar
     JavaTest test =
         resolver.addToIndex(
             new JavaTest(
-                params.appendExtraDeps(
-                    Iterables.concat(
-                        BuildRules.getExportedRules(
-                            Iterables.concat(
-                                params.getDeclaredDeps().get(),
-                                resolver.getAllRules(args.providedDeps.get()))),
-                        scalac.getDeps(pathResolver))),
+                params.appendExtraDeps(scalac.getDeps(pathResolver)),
                 pathResolver,
                 args.srcs.get(),
                 ResourceValidator.validateResources(
@@ -151,7 +144,6 @@ public class ScalaTestDescription implements Description<ScalaTestDescription.Ar
                 cxxLibraryEnhancement.nativeLibsEnvironment,
                 /* sourcesUnderTest */ ImmutableSet.<BuildRule>of(),
                 args.resourcesRoot,
-                args.mavenCoords,
                 args.testRuleTimeoutMs.or(defaultTestRuleTimeoutMs),
                 args.runTestSeparately.or(false),
                 args.stdOutLogLevel,
@@ -180,7 +172,15 @@ public class ScalaTestDescription implements Description<ScalaTestDescription.Ar
   }
 
   @SuppressFieldNotInitialized
-  public static class Arg extends ScalaLibraryDescription.Arg {
+  public static class Arg {
+    public Optional<ImmutableSortedSet<SourcePath>> srcs;
+    public Optional<ImmutableSortedSet<SourcePath>> resources;
+    public Optional<ImmutableList<String>> extraArguments;
+    public Optional<ImmutableSortedSet<BuildTarget>> deps;
+
+    @Hint(isInput = false)
+    public Optional<Path> resourcesRoot;
+
     public Optional<ImmutableSortedSet<String>> contacts;
     public Optional<ImmutableSortedSet<Label>> labels;
     public Optional<ImmutableList<String>> vmArgs;

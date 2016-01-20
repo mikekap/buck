@@ -21,6 +21,7 @@ import com.facebook.buck.jvm.java.CalculateAbi;
 import com.facebook.buck.jvm.java.JavaTest;
 import com.facebook.buck.jvm.java.JavacOptions;
 import com.facebook.buck.jvm.java.JavacOptionsFactory;
+import com.facebook.buck.jvm.java.JvmLibraryArg;
 import com.facebook.buck.jvm.java.TestType;
 import com.facebook.buck.model.BuildTarget;
 import com.facebook.buck.parser.NoSuchBuildTargetException;
@@ -28,7 +29,6 @@ import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
 import com.facebook.buck.rules.BuildRuleType;
-import com.facebook.buck.rules.BuildRules;
 import com.facebook.buck.rules.BuildTargetSourcePath;
 import com.facebook.buck.rules.Description;
 import com.facebook.buck.rules.Label;
@@ -41,7 +41,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
 
 import java.nio.file.Path;
 import java.util.logging.Level;
@@ -104,13 +103,8 @@ public class GroovyTestDescription implements Description<GroovyTestDescription.
         resolver.addToIndex(
             new JavaTest(
                 params.appendExtraDeps(
-                    Iterables.concat(
-                        BuildRules.getExportedRules(
-                            Iterables.concat(
-                                params.getDeclaredDeps().get(),
-                                resolver.getAllRules(args.providedDeps.get()))),
-                        pathResolver.filterBuildRuleInputs(
-                            defaultJavacOptions.getInputs(pathResolver)))),
+                    pathResolver.filterBuildRuleInputs(
+                        defaultJavacOptions.getInputs(pathResolver))),
                 pathResolver,
                 args.srcs.get(),
                 ResourceValidator.validateResources(
@@ -129,7 +123,6 @@ public class GroovyTestDescription implements Description<GroovyTestDescription.
                 ImmutableMap.<String, String>of(),
                 ImmutableSet.<BuildRule>of(),
                 Optional.<Path>absent(),
-                Optional.<String>absent(),
                 args.testRuleTimeoutMs.or(defaultTestRuleTimeoutMs),
                 args.getRunTestSeparately(),
                 args.stdOutLogLevel,
@@ -147,7 +140,12 @@ public class GroovyTestDescription implements Description<GroovyTestDescription.
   }
 
   @SuppressFieldNotInitialized
-  public static class Arg extends GroovyLibraryDescription.Arg {
+  public static class Arg extends JvmLibraryArg {
+    public Optional<ImmutableSortedSet<SourcePath>> srcs;
+    public Optional<ImmutableSortedSet<SourcePath>> resources;
+    public Optional<ImmutableList<String>> extraGroovycArguments;
+    public Optional<ImmutableSortedSet<BuildTarget>> deps;
+
     public Optional<ImmutableSortedSet<String>> contacts;
     public Optional<ImmutableSortedSet<Label>> labels;
     public Optional<ImmutableList<String>> vmArgs;
