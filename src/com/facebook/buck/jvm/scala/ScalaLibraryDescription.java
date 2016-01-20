@@ -25,7 +25,6 @@ import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
 import com.facebook.buck.rules.BuildRuleType;
-import com.facebook.buck.rules.BuildRules;
 import com.facebook.buck.rules.BuildTargetSourcePath;
 import com.facebook.buck.rules.Description;
 import com.facebook.buck.rules.Hint;
@@ -41,7 +40,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
 
 import java.nio.file.Path;
 
@@ -99,13 +97,7 @@ public class ScalaLibraryDescription implements Description<ScalaLibraryDescript
     DefaultJavaLibrary defaultJavaLibrary =
         resolver.addToIndex(
             new DefaultJavaLibrary(
-                params.appendExtraDeps(
-                    Iterables.concat(
-                        BuildRules.getExportedRules(
-                            Iterables.concat(
-                                params.getDeclaredDeps().get(),
-                                resolver.getAllRules(args.providedDeps.get()))),
-                        scalac.getDeps(pathResolver))),
+                params.appendExtraDeps(scalac.getDeps(pathResolver)),
                 pathResolver,
                 args.srcs.get(),
                 validateResources(

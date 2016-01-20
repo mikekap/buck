@@ -24,6 +24,7 @@ import com.facebook.buck.rules.AddToRuleKey;
 import com.facebook.buck.rules.BuildContext;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
+import com.facebook.buck.rules.BuildRules;
 import com.facebook.buck.rules.BuildableContext;
 import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.shell.ShellStep;
@@ -31,6 +32,7 @@ import com.facebook.buck.step.ExecutionContext;
 import com.facebook.buck.step.Step;
 import com.facebook.buck.step.fs.MakeCleanDirectoryStep;
 import com.facebook.buck.step.fs.MkdirStep;
+import com.facebook.buck.util.Optionals;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -200,15 +202,19 @@ public class GwtBinary extends AbstractBuildRule {
   Iterable<Path> getClasspathEntries() {
     ImmutableSet.Builder<Path> classpathEntries = ImmutableSet.builder();
     classpathEntries.addAll(gwtModuleJars);
-    for (BuildRule dep : getDeclaredDeps()) {
+
+    Iterable<BuildRule> deps = Iterables.concat(
+        getDeclaredDeps(),
+        BuildRules.getExportedRules(getDeclaredDeps()));
+    for (BuildRule dep : deps) {
       if (!(dep instanceof JavaLibrary)) {
         continue;
       }
 
       JavaLibrary javaLibrary = (JavaLibrary) dep;
-      for (Path path : javaLibrary.getOutputClasspathEntries().values()) {
-        classpathEntries.add(path);
-      }
+      Optionals.addIfPresent(
+          javaLibrary.getOutputClasspathEntry(),
+          classpathEntries);
     }
     return classpathEntries.build();
   }

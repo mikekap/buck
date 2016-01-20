@@ -30,7 +30,6 @@ import com.facebook.buck.model.UnflavoredBuildTarget;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
-import com.facebook.buck.rules.BuildRules;
 import com.facebook.buck.rules.BuildTargetSourcePath;
 import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.rules.SourcePathResolver;
@@ -141,10 +140,9 @@ public class ThriftJavaEnhancer implements ThriftLanguageSpecificEnhancer {
             ImmutableSortedSet.<BuildRule>naturalOrder()
                 .addAll(sourceZips)
                 .addAll(deps)
-                .addAll(BuildRules.getExportedRules(deps))
-                .addAll(pathResolver.filterBuildRuleInputs(templateOptions.getInputs(pathResolver)))
                 .build()),
-        Suppliers.ofInstance(ImmutableSortedSet.<BuildRule>of()));
+        Suppliers.ofInstance(ImmutableSortedSet.copyOf(
+            pathResolver.filterBuildRuleInputs(templateOptions.getInputs(pathResolver)))));
 
     BuildTarget abiJarTarget =
         BuildTarget.builder(params.getBuildTarget())

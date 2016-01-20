@@ -65,8 +65,8 @@ public class FakeJavaLibrary extends FakeBuildRule implements JavaLibrary, Andro
   }
 
   @Override
-  public ImmutableSetMultimap<JavaLibrary, Path> getOutputClasspathEntries() {
-    return ImmutableSetMultimap.of();
+  public Optional<Path> getOutputClasspathEntry() {
+    return Optional.absent();
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.ExportDependencies;
 import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.rules.SourcePathResolver;
+import com.facebook.buck.util.Optionals;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
@@ -33,12 +34,8 @@ public class JavaLibraryClasspathProvider {
   private JavaLibraryClasspathProvider() {
   }
 
-  public static ImmutableSetMultimap<JavaLibrary, Path> getOutputClasspathEntries(
-      JavaLibrary javaLibraryRule,
-      SourcePathResolver resolver,
-      Optional<SourcePath> outputJar) {
-    ImmutableSetMultimap.Builder<JavaLibrary, Path> outputClasspathBuilder =
-        ImmutableSetMultimap.builder();
+  public static ImmutableSet<Path> getSuggestClasspathEntries(JavaLibrary javaLibraryRule) {
+    ImmutableSet.Builder<Path> suggestClasspathBuilder = ImmutableSet.builder();
     Iterable<JavaLibrary> javaExportedLibraryDeps;
     if (javaLibraryRule instanceof ExportDependencies) {
       javaExportedLibraryDeps =
@@ -48,20 +45,19 @@ public class JavaLibraryClasspathProvider {
     }
 
     for (JavaLibrary rule : javaExportedLibraryDeps) {
-      outputClasspathBuilder.putAll(rule, rule.getOutputClasspathEntries().values());
       // If we have any exported deps, add an entry mapping ourselves to to their,
       // classpaths so when suggesting libraries to add we know that adding this library
       // would pull in it's deps.
-      outputClasspathBuilder.putAll(
-          javaLibraryRule,
-          rule.getOutputClasspathEntries().values());
+      Optionals.addIfPresent(
+          rule.getOutputClasspathEntry(),
+          suggestClasspathBuilder
+      );
     }
 
-    if (outputJar.isPresent()) {
-      outputClasspathBuilder.put(javaLibraryRule, resolver.getAbsolutePath(outputJar.get()));
-    }
-
-    return outputClasspathBuilder.build();
+    Optionals.addIfPresent(
+        javaLibraryRule.getOutputClasspathEntry(),
+        suggestClasspathBuilder);
+    return suggestClasspathBuilder.build();
   }
 
   public static ImmutableSetMultimap<JavaLibrary, Path> getTransitiveClasspathEntries(
@@ -115,22 +111,6 @@ public class JavaLibraryClasspathProvider {
     }
 
     return classpathDeps.build();
-  }
-
-  public static ImmutableSetMultimap<JavaLibrary, Path> getDeclaredClasspathEntries(
-      JavaLibrary javaLibraryRule) {
-    final ImmutableSetMultimap.Builder<JavaLibrary, Path> classpathEntries =
-        ImmutableSetMultimap.builder();
-
-    Iterable<JavaLibrary> javaLibraryDeps = getJavaLibraryDeps(
-        javaLibraryRule.getDepsForTransitiveClasspathEntries());
-
-    for (JavaLibrary rule : javaLibraryDeps) {
-      for (Path path : rule.getOutputClasspathEntries().values()) {
-        classpathEntries.put(rule, rule.getProjectFilesystem().resolve(path));
-      }
-    }
-    return classpathEntries.build();
   }
 
   static FluentIterable<JavaLibrary> getJavaLibraryDeps(Iterable<BuildRule> deps) {

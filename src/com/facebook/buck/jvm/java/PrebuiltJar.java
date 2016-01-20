@@ -187,10 +187,8 @@ public class PrebuiltJar extends AbstractBuildRule
   }
 
   @Override
-  public ImmutableSetMultimap<JavaLibrary, Path> getOutputClasspathEntries() {
-    return ImmutableSetMultimap.<JavaLibrary, Path>of(
-        this,
-        getResolver().getAbsolutePath(getBinaryJar()));
+  public Optional<Path> getOutputClasspathEntry() {
+    return Optional.of(getResolver().getAbsolutePath(getBinaryJar()));
   }
 
   @Override

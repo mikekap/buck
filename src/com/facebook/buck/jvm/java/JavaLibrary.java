@@ -22,7 +22,6 @@ import com.facebook.buck.model.ImmutableFlavor;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.SourcePath;
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.hash.HashCode;
@@ -63,23 +62,16 @@ public interface JavaLibrary extends BuildRule, HasClasspathEntries,
    */
   public static final Flavor MAVEN_JAR = ImmutableFlavor.of("maven");
 
+  // Returns declared dependencies + exported dependencies.
   // TODO(natthu): This can probably be avoided by using a JavaPackageable interface similar to
   // AndroidPackageable.
   public ImmutableSortedSet<BuildRule> getDepsForTransitiveClasspathEntries();
 
   /**
-   * @return The set of entries to pass to {@code javac}'s {@code -classpath} flag in order to
-   * build a jar associated with this rule.  Contains the classpath entries for the transitive
-   * dependencies of these rules.
-   */
-  @Override
-  public ImmutableSetMultimap<JavaLibrary, Path> getTransitiveClasspathEntries();
-
-  /**
-   * @return The set of entries to pass to {@code javac}'s {@code -classpath} flag in order to
+   * @return The entry to pass to {@code javac}'s {@code -classpath} flag in order to
    * compile rules that depend on this rule.
    */
-  public ImmutableSetMultimap<JavaLibrary, Path> getOutputClasspathEntries();
+  public Optional<Path> getOutputClasspathEntry();
 
   public ImmutableSortedSet<Path> getJavaSrcs();
 

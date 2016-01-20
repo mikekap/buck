@@ -30,7 +30,6 @@ import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
 import com.facebook.buck.rules.BuildRuleType;
-import com.facebook.buck.rules.BuildRules;
 import com.facebook.buck.rules.BuildTargetSourcePath;
 import com.facebook.buck.rules.Description;
 import com.facebook.buck.rules.SourcePath;
@@ -43,7 +42,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
 
 import java.nio.file.Path;
 
@@ -128,15 +126,8 @@ public class AndroidLibraryDescription
       AndroidLibrary library =
           resolver.addToIndex(
               new AndroidLibrary(
-                  params.appendExtraDeps(
-                      Iterables.concat(
-                          BuildRules.getExportedRules(
-                              Iterables.concat(
-                                  params.getDeclaredDeps().get(),
-                                  exportedDeps,
-                                  resolver.getAllRules(args.providedDeps.get()))),
-                          pathResolver.filterBuildRuleInputs(
-                              javacOptions.getInputs(pathResolver)))),
+                  params.appendExtraDeps(pathResolver.filterBuildRuleInputs(
+                      javacOptions.getInputs(pathResolver))),
                   pathResolver,
                   args.srcs.get(),
                   ResourceValidator.validateResources(

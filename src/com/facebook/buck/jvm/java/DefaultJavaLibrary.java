@@ -31,6 +31,7 @@ import com.facebook.buck.rules.BuildContext;
 import com.facebook.buck.rules.BuildOutputInitializer;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
+import com.facebook.buck.rules.BuildRules;
 import com.facebook.buck.rules.BuildTargetSourcePath;
 import com.facebook.buck.rules.BuildableContext;
 import com.facebook.buck.rules.BuildableProperties;
@@ -49,7 +50,6 @@ import com.facebook.buck.util.HumanReadableException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicates;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
@@ -58,6 +58,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 import com.google.common.reflect.ClassPath;
@@ -68,6 +69,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -111,15 +113,12 @@ public class DefaultJavaLibrary extends AbstractBuildRule
   private final ImmutableList<String> postprocessClassesCommands;
   private final ImmutableSortedSet<BuildRule> exportedDeps;
   private final ImmutableSortedSet<BuildRule> providedDeps;
+  private final Supplier<ImmutableSortedSet<BuildRule>> transitiveExportedDeps;
   // Some classes need to override this when enhancing deps (see AndroidLibrary).
   private final ImmutableSet<Path> additionalClasspathEntries;
   private final Supplier<ImmutableSetMultimap<JavaLibrary, Path>>
-      outputClasspathEntriesSupplier;
-  private final Supplier<ImmutableSetMultimap<JavaLibrary, Path>>
       transitiveClasspathEntriesSupplier;
   private final Supplier<ImmutableSet<JavaLibrary>> transitiveClasspathDepsSupplier;
-  private final Supplier<ImmutableSetMultimap<JavaLibrary, Path>>
-      declaredClasspathEntriesSupplier;
 
   private final SourcePath abiJar;
   @AddToRuleKey
@@ -180,7 +179,7 @@ public class DefaultJavaLibrary extends AbstractBuildRule
       Optional<Path> resourcesRoot,
       Optional<String> mavenCoords,
       ImmutableSortedSet<BuildTarget> tests) {
-    this(
+    this(new DefaultJavaLibraryParams(
         params,
         resolver,
         srcs,
@@ -191,92 +190,146 @@ public class DefaultJavaLibrary extends AbstractBuildRule
         exportedDeps,
         providedDeps,
         abiJar,
-        Suppliers.memoize(
-            new Supplier<ImmutableSortedSet<SourcePath>>() {
-              @Override
-              public ImmutableSortedSet<SourcePath> get() {
-                return JavaLibraryRules.getAbiInputs(params.getDeps());
-              }
-            }),
         additionalClasspathEntries,
         compileStepFactory,
         resourcesRoot,
         mavenCoords,
-        tests);
+        tests));
   }
 
-  private DefaultJavaLibrary(
-      BuildRuleParams params,
-      final SourcePathResolver resolver,
-      Set<? extends SourcePath> srcs,
-      Set<? extends SourcePath> resources,
-      Optional<Path> generatedSourceFolder,
-      Optional<SourcePath> proguardConfig,
-      ImmutableList<String> postprocessClassesCommands,
-      ImmutableSortedSet<BuildRule> exportedDeps,
-      ImmutableSortedSet<BuildRule> providedDeps,
-      SourcePath abiJar,
-      final Supplier<ImmutableSortedSet<SourcePath>> abiClasspath,
-      ImmutableSet<Path> additionalClasspathEntries,
-      CompileToJarStepFactory compileStepFactory,
-      Optional<Path> resourcesRoot,
-      Optional<String> mavenCoords,
-      ImmutableSortedSet<BuildTarget> tests) {
-    super(
-        params.appendExtraDeps(
-            new Supplier<Iterable<? extends BuildRule>>() {
-              @Override
-              public Iterable<? extends BuildRule> get() {
-                return resolver.filterBuildRuleInputs(abiClasspath.get());
-              }
-            }),
-        resolver);
-    this.compileStepFactory = compileStepFactory;
+  private static class DefaultJavaLibraryParams {
+    final BuildRuleParams params;
+    final SourcePathResolver resolver;
+    final Set<? extends SourcePath> srcs;
+    final Set<? extends SourcePath> resources;
+    final Optional<Path> generatedSourceFolder;
+    final Optional<SourcePath> proguardConfig;
+    final ImmutableList<String> postprocessClassesCommands;
+    final ImmutableSortedSet<BuildRule> exportedDeps;
+    final ImmutableSortedSet<BuildRule> providedDeps;
+    final Supplier<ImmutableSortedSet<BuildRule>> transitiveExportedDeps;
+    final SourcePath abiJar;
+    final ImmutableSet<Path> additionalClasspathEntries;
+    final CompileToJarStepFactory compileStepFactory;
+    final Optional<Path> resourcesRoot;
+    final Optional<String> mavenCoords;
+    final ImmutableSortedSet<BuildTarget> tests;
+    final Supplier<ImmutableSortedSet<SourcePath>> abiClasspath;
+
+    public DefaultJavaLibraryParams(
+        BuildRuleParams params,
+        final SourcePathResolver resolver,
+        Set<? extends SourcePath> srcs,
+        Set<? extends SourcePath> resources,
+        Optional<Path> generatedSourceFolder,
+        Optional<SourcePath> proguardConfig,
+        ImmutableList<String> postprocessClassesCommands,
+        final ImmutableSortedSet<BuildRule> exportedDeps,
+        final ImmutableSortedSet<BuildRule> providedDeps,
+        SourcePath abiJar,
+        ImmutableSet<Path> additionalClasspathEntries,
+        CompileToJarStepFactory compileStepFactory,
+        Optional<Path> resourcesRoot,
+        Optional<String> mavenCoords,
+        ImmutableSortedSet<BuildTarget> tests) {
+      final Supplier<ImmutableSortedSet<BuildRule>> inputDeclaredDeps = params.getDeclaredDeps();
+      final Supplier<ImmutableSortedSet<BuildRule>> inputExtraDeps = params.getExtraDeps();
+
+      this.transitiveExportedDeps = Suppliers.memoize(
+          new Supplier<ImmutableSortedSet<BuildRule>>() {
+            @Override
+            public ImmutableSortedSet<BuildRule> get() {
+              return BuildRules.getExportedRules(
+                  Iterables.concat(
+                      inputDeclaredDeps.get(),
+                      exportedDeps,
+                      providedDeps));
+            }
+          });
+
+      params = params.copyWithExtraDeps(new Supplier<ImmutableSortedSet<BuildRule>>() {
+        @Override
+        public ImmutableSortedSet<BuildRule> get() {
+          return ImmutableSortedSet.<BuildRule>naturalOrder()
+              .addAll(inputExtraDeps.get())
+              .addAll(providedDeps)
+              .addAll(exportedDeps)
+              .addAll(transitiveExportedDeps.get())
+              .build();
+        }
+      });
+
+      final Supplier<ImmutableSortedSet<BuildRule>> finalDeps = params.getTotalDeps();
+      this.abiClasspath = Suppliers.memoize(
+          new Supplier<ImmutableSortedSet<SourcePath>>() {
+            @Override
+            public ImmutableSortedSet<SourcePath> get() {
+              return JavaLibraryRules.getAbiInputs(finalDeps.get());
+            }
+          });
+
+      this.params = params.appendExtraDeps(new Supplier<Iterable<? extends BuildRule>>() {
+        @Override
+        public Iterable<? extends BuildRule> get() {
+          return resolver.filterBuildRuleInputs(abiClasspath.get());
+        }
+      });
+      this.resolver = resolver;
+      this.srcs = srcs;
+      this.resources = resources;
+      this.generatedSourceFolder = generatedSourceFolder;
+      this.proguardConfig = proguardConfig;
+      this.postprocessClassesCommands = postprocessClassesCommands;
+      this.exportedDeps = exportedDeps;
+      this.providedDeps = providedDeps;
+      this.abiJar = abiJar;
+      this.additionalClasspathEntries = additionalClasspathEntries;
+      this.compileStepFactory = compileStepFactory;
+      this.resourcesRoot = resourcesRoot;
+      this.mavenCoords = mavenCoords;
+      this.tests = tests;
+    }
+  }
+
+  private DefaultJavaLibrary(DefaultJavaLibraryParams libraryParams) {
+    super(libraryParams.params, libraryParams.resolver);
+    this.compileStepFactory = libraryParams.compileStepFactory;
 
     // Exported deps are meant to be forwarded onto the CLASSPATH for dependents,
     // and so only make sense for java library types.
-    for (BuildRule dep : exportedDeps) {
+    for (BuildRule dep : libraryParams.exportedDeps) {
       if (!(dep instanceof JavaLibrary)) {
         throw new HumanReadableException(
-            params.getBuildTarget() + ": exported dep " +
+            getBuildTarget() + ": exported dep " +
             dep.getBuildTarget() + " (" + dep.getType() + ") " +
             "must be a type of java library.");
       }
     }
 
-    this.srcs = ImmutableSortedSet.copyOf(srcs);
-    this.resources = ImmutableSortedSet.copyOf(resources);
-    this.proguardConfig = proguardConfig;
-    this.postprocessClassesCommands = postprocessClassesCommands;
-    this.exportedDeps = exportedDeps;
-    this.providedDeps = providedDeps;
+    this.srcs = ImmutableSortedSet.copyOf(libraryParams.srcs);
+    this.resources = ImmutableSortedSet.copyOf(libraryParams.resources);
+    this.proguardConfig = libraryParams.proguardConfig;
+    this.postprocessClassesCommands = libraryParams.postprocessClassesCommands;
+    this.exportedDeps = libraryParams.exportedDeps;
+    this.providedDeps = libraryParams.providedDeps;
+    this.transitiveExportedDeps = libraryParams.transitiveExportedDeps;
     this.additionalClasspathEntries = FluentIterable
-        .from(additionalClasspathEntries)
+        .from(libraryParams.additionalClasspathEntries)
         .transform(getProjectFilesystem().getAbsolutifier())
         .toSet();
-    this.resourcesRoot = resourcesRoot;
-    this.mavenCoords = mavenCoords;
-    this.tests = tests;
+    this.resourcesRoot = libraryParams.resourcesRoot;
+    this.mavenCoords = libraryParams.mavenCoords;
+    this.tests = libraryParams.tests;
 
-    this.abiJar = abiJar;
-    this.abiClasspath = abiClasspath;
+    this.abiJar = libraryParams.abiJar;
+    this.abiClasspath = libraryParams.abiClasspath;
+    this.generatedSourceFolder = libraryParams.generatedSourceFolder;
 
     if (!srcs.isEmpty() || !resources.isEmpty()) {
       this.outputJar = Optional.of(getOutputJarPath(getBuildTarget()));
     } else {
       this.outputJar = Optional.absent();
     }
-
-    this.outputClasspathEntriesSupplier =
-        Suppliers.memoize(new Supplier<ImmutableSetMultimap<JavaLibrary, Path>>() {
-          @Override
-          public ImmutableSetMultimap<JavaLibrary, Path> get() {
-            return JavaLibraryClasspathProvider.getOutputClasspathEntries(
-                DefaultJavaLibrary.this,
-                getResolver(),
-                sourcePathForOutputJar());
-          }
-        });
 
     this.transitiveClasspathEntriesSupplier =
         Suppliers.memoize(new Supplier<ImmutableSetMultimap<JavaLibrary, Path>>() {
@@ -300,17 +353,7 @@ public class DefaultJavaLibrary extends AbstractBuildRule
               }
             });
 
-    this.declaredClasspathEntriesSupplier =
-        Suppliers.memoize(new Supplier<ImmutableSetMultimap<JavaLibrary, Path>>() {
-          @Override
-          public ImmutableSetMultimap<JavaLibrary, Path> get() {
-            return JavaLibraryClasspathProvider.getDeclaredClasspathEntries(
-                DefaultJavaLibrary.this);
-          }
-        });
-
-    this.buildOutputInitializer = new BuildOutputInitializer<>(params.getBuildTarget(), this);
-    this.generatedSourceFolder = generatedSourceFolder;
+    this.buildOutputInitializer = new BuildOutputInitializer<>(getBuildTarget(), this);
   }
 
   private Path getPathToAbiOutputDir() {
@@ -378,12 +421,31 @@ public class DefaultJavaLibrary extends AbstractBuildRule
    */
   @VisibleForTesting
   ImmutableSetMultimap<JavaLibrary, Path> getDeclaredClasspathEntries() {
-    return declaredClasspathEntriesSupplier.get();
+    final ImmutableSetMultimap.Builder<JavaLibrary, Path> classpathEntries =
+        ImmutableSetMultimap.builder();
+
+    Iterable<JavaLibrary> javaLibraryDeps = JavaLibraryClasspathProvider.getJavaLibraryDeps(
+        Iterables.concat(getDeclaredDeps(), exportedDeps, transitiveExportedDeps.get()));
+
+    HashSet<JavaLibrary> seen = Sets.newHashSet();
+    for (JavaLibrary rule : javaLibraryDeps) {
+      if (seen.contains(rule)) {
+        continue;
+      }
+      seen.add(rule);
+
+      Optional<Path> classpathEntry = rule.getOutputClasspathEntry();
+      if (classpathEntry.isPresent()) {
+        classpathEntries.put(rule, classpathEntry.get());
+      }
+    }
+    classpathEntries.putAll(this, additionalClasspathEntries);
+    return classpathEntries.build();
   }
 
   @Override
-  public ImmutableSetMultimap<JavaLibrary, Path> getOutputClasspathEntries() {
-    return outputClasspathEntriesSupplier.get();
+  public Optional<Path> getOutputClasspathEntry() {
+    return outputJar.transform(getProjectFilesystem().getAbsolutifier());
   }
 
   @Override
@@ -409,11 +471,7 @@ public class DefaultJavaLibrary extends AbstractBuildRule
 
     // Only override the bootclasspath if this rule is supposed to compile Android code.
     ImmutableSetMultimap<JavaLibrary, Path> declaredClasspathEntries =
-        ImmutableSetMultimap.<JavaLibrary, Path>builder()
-            .putAll(getDeclaredClasspathEntries())
-            .putAll(this, additionalClasspathEntries)
-            .build();
-
+        getDeclaredClasspathEntries();
 
     // Always create the output directory, even if there are no .java files to compile because there
     // might be resources that need to be copied there.
@@ -437,17 +495,15 @@ public class DefaultJavaLibrary extends AbstractBuildRule
             new Function<JavaLibrary, Collection<Path>>() {
               @Override
               public Collection<Path> apply(JavaLibrary input) {
-                return input.getOutputClasspathEntries().values();
+                return input.getOutputClasspathEntry().asSet();
               }
             })
-        .filter(Predicates.notNull())
         .toSet();
 
     ImmutableSortedSet<Path> declared = ImmutableSortedSet.<Path>naturalOrder()
         .addAll(declaredClasspathEntries.values())
         .addAll(provided)
         .build();
-
 
     // Make sure that this directory exists because ABI information will be written here.
     Step mkdir = new MakeCleanDirectoryStep(getProjectFilesystem(), getPathToAbiOutputDir());

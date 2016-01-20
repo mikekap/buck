@@ -221,7 +221,7 @@ abstract class AbstractJavacOptions implements RuleKeyAppendable {
         // And now include any transitive deps that contribute to the classpath.
         if (rule instanceof JavaLibrary) {
           builder.addAll(
-              FluentIterable.from(((JavaLibrary) rule).getDepsForTransitiveClasspathEntries())
+              FluentIterable.from(((JavaLibrary) rule).getTransitiveClasspathDeps())
                   .transform(SourcePaths.getToBuildTargetSourcePath())
                   .toList());
         } else {

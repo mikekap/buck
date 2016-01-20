@@ -377,10 +377,9 @@ public class DefaultJavaLibraryTest {
       }
 
       @Override
-      public ImmutableSetMultimap<JavaLibrary, Path> getOutputClasspathEntries() {
-        return ImmutableSetMultimap.of(
-            (JavaLibrary) this,
-            Paths.get("java/src/com/libone/bar.jar"));
+      public Optional<Path> getOutputClasspathEntry() {
+        return Optional.of(
+            getProjectFilesystem().resolve("java/src/com/libone/bar.jar"));
       }
 
       @Override
@@ -520,42 +519,19 @@ public class DefaultJavaLibraryTest {
     assertEquals(
         "A java_library that depends on //:libone should include only libone.jar in its " +
             "classpath when compiling itself.",
-        ImmutableSetMultimap.of(
-            getJavaLibrary(notIncluded),
+        Optional.of(
             root.resolve("buck-out/gen/lib__not_included__output/not_included.jar")),
-        getJavaLibrary(notIncluded).getOutputClasspathEntries());
+        getJavaLibrary(notIncluded).getOutputClasspathEntry());
 
     assertEquals(
-        ImmutableSetMultimap.of(
-            getJavaLibrary(included),
+        Optional.of(
             root.resolve("buck-out/gen/lib__included__output/included.jar")),
-        getJavaLibrary(included).getOutputClasspathEntries());
+        getJavaLibrary(included).getOutputClasspathEntry());
 
     assertEquals(
-        ImmutableSetMultimap.of(
-            getJavaLibrary(included),
-            root.resolve("buck-out/gen/lib__included__output/included.jar"),
-            getJavaLibrary(libraryOne),
-            root.resolve("buck-out/gen/lib__libone__output/libone.jar"),
-            getJavaLibrary(libraryOne),
-            root.resolve("buck-out/gen/lib__included__output/included.jar")),
-        getJavaLibrary(libraryOne).getOutputClasspathEntries());
-
-    assertEquals(
-        "//:libtwo exports its deps, so a java_library that depends on //:libtwo should include " +
-            "both libone.jar and libtwo.jar in its classpath when compiling itself.",
-        ImmutableSetMultimap.of(
-            getJavaLibrary(libraryOne),
-            root.resolve("buck-out/gen/lib__libone__output/libone.jar"),
-            getJavaLibrary(libraryOne),
-            root.resolve("buck-out/gen/lib__included__output/included.jar"),
-            getJavaLibrary(libraryTwo),
-            root.resolve("buck-out/gen/lib__libone__output/libone.jar"),
-            getJavaLibrary(libraryTwo),
-            root.resolve("buck-out/gen/lib__libtwo__output/libtwo.jar"),
-            getJavaLibrary(libraryTwo),
-            root.resolve("buck-out/gen/lib__included__output/included.jar")),
-        getJavaLibrary(libraryTwo).getOutputClasspathEntries());
+        Optional.of(
+            root.resolve("buck-out/gen/lib__libone__output/libone.jar")),
+        getJavaLibrary(libraryOne).getOutputClasspathEntry());
 
     assertEquals(
         "A java_binary that depends on //:parent should include libone.jar, libtwo.jar and " +
@@ -596,10 +572,9 @@ public class DefaultJavaLibraryTest {
     assertEquals(
         "A java_library that depends on //:parent should include only parent.jar in its " +
             "-classpath when compiling itself.",
-        ImmutableSetMultimap.of(
-            getJavaLibrary(parent),
+        Optional.of(
             root.resolve("buck-out/gen/lib__parent__output/parent.jar")),
-        getJavaLibrary(parent).getOutputClasspathEntries());
+        getJavaLibrary(parent).getOutputClasspathEntry());
   }
 
   /**
@@ -961,7 +936,7 @@ public class DefaultJavaLibraryTest {
     RuleKey unaffectedRuleKey = factory.build(library);
     assertThat(originalRuleKey, Matchers.equalTo(unaffectedRuleKey));
 
-    // Now actually change the exproted Java library dependency's ABI JAR.  This *should* affect
+    // Now actually change the exported Java library dependency's ABI JAR.  This *should* affect
     // the input-based rule key of the consuming java library.
     resolver =
         new BuildRuleResolver(TargetGraph.EMPTY, new BuildTargetNodeToBuildRuleTransformer());

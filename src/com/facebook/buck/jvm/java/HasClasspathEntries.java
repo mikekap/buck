@@ -27,7 +27,9 @@ import java.nio.file.Path;
 public interface HasClasspathEntries {
 
   /**
-   * @return A map of rule names to classpath entries for this rule and its dependencies.
+   * @return The set of entries to pass to {@code javac}'s {@code -classpath} flag in order to
+   * build a jar associated with this rule.  Contains the classpath entries for the transitive
+   * dependencies of these rules.
    */
   ImmutableSetMultimap<JavaLibrary, Path> getTransitiveClasspathEntries();
 
