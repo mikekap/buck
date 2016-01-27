@@ -346,6 +346,15 @@ public class CxxSourceRuleFactory {
         .build();
   }
 
+  public BuildTarget createCgoBuildTarget() {
+    return BuildTarget
+        .builder(params.getBuildTarget())
+        .addAllFlavors(params.getBuildTarget().getFlavors())
+        .addFlavors(cxxPlatform.getFlavor())
+        .addFlavors(ImmutableFlavor.of("cgo"))
+        .build();
+  }
+
   public BuildTarget createInferCaptureBuildTarget(String name) {
     String outputName = Flavor.replaceInvalidCharacters(getCompileOutputName(name));
     return BuildTarget
@@ -408,6 +417,51 @@ public class CxxSourceRuleFactory {
     }
 
     return args.build();
+  }
+
+  public CGoPreprocessRule createCgoBuildRule(
+      BuildRuleResolver resolver,
+      Tool cgo,
+      Path packageName,
+      ImmutableList<SourcePath> sources) {
+
+    CxxSource.Type sourceType = CxxSource.Type.C;
+
+    BuildTarget target = createCgoBuildTarget();
+    Compiler compiler = getCompiler(sourceType);
+
+    ImmutableSortedSet<BuildRule> dependencies =
+        ImmutableSortedSet.<BuildRule>naturalOrder()
+            // Add dependencies on any build rules used to create the compiler.
+            .addAll(compiler.getDeps(pathResolver))
+            // If a build rule generates our input source, add that as a dependency.
+            .addAll(pathResolver.filterBuildRuleInputs(sources))
+            // Cgo dependencies
+            .addAll(cgo.getDeps(pathResolver))
+            .build();
+
+    // Build up the list of compiler flags.
+    ImmutableList<String> compilerFlags =
+        ImmutableList.<String>builder()
+            // Add in the platform specific compiler flags.
+            .addAll(getPlatformCompileFlags(sourceType))
+            // Add custom compiler flags.
+            .addAll(getRuleCompileFlags(sourceType))
+            .build();
+
+    CGoPreprocessRule result = new CGoPreprocessRule(
+        params.copyWithChanges(
+            target,
+            Suppliers.ofInstance(dependencies),
+            Suppliers.ofInstance(ImmutableSortedSet.<BuildRule>of())),
+        pathResolver,
+        cgo,
+        compiler,
+        packageName,
+        compilerFlags,
+        sources);
+    resolver.addToIndex(result);
+    return result;
   }
 
   /**

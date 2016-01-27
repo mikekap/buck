@@ -81,6 +81,9 @@ public class GoBuckConfig {
   Supplier<Tool> getGoLinker() {
     return getGoTool("linker", "link");
   }
+  Supplier<Tool> getCGoTool() {
+    return getGoTool("cgo", "cgo");
+  }
 
   Path getDefaultPackageName(BuildTarget target) {
     Path prefix = Paths.get(delegate.getValue("go", "prefix").or(""));
