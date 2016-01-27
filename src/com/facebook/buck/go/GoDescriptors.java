@@ -145,7 +145,42 @@ abstract class GoDescriptors {
             .build(),
         goBuckConfig.getGoCompiler().get(),
         tests);
+  }
 
+  static GoLibrary createMergedGoLibraryRule(
+      BuildRuleParams params,
+      BuildRuleResolver resolver,
+      GoBuckConfig goBuckConfig,
+      final GoLibrary otherLibrary,
+      ImmutableSet<SourcePath> extraSrcs,
+      List<String> extraCompilerFlags) {
+    final BuildRuleParams originalParams = params;
+    params = params.copyWithDeps(
+        new Supplier<ImmutableSortedSet<BuildRule>>() {
+          @Override
+          public ImmutableSortedSet<BuildRule> get() {
+            return ImmutableSortedSet.<BuildRule>naturalOrder()
+                .addAll(otherLibrary.getDeclaredDeps())
+                .addAll(originalParams.getDeclaredDeps().get())
+                .build();
+          }
+        },
+        params.getExtraDeps());
+
+    GoSymlinkTree symlinkTree = createDirectSymlinkTreeRule(params, resolver);
+    resolver.addToIndex(symlinkTree);
+    return new GoLibrary(
+        params.appendExtraDeps(ImmutableList.of(symlinkTree)),
+        new SourcePathResolver(resolver),
+        symlinkTree,
+        packageName,
+        ImmutableSet.copyOf(srcs),
+        ImmutableList.<String>builder()
+            .addAll(goBuckConfig.getCompilerFlags())
+            .addAll(compilerFlags)
+            .build(),
+        goBuckConfig.getGoCompiler().get(),
+        tests);
   }
 
   static GoBinary createGoBinaryRule(
