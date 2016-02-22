@@ -118,7 +118,7 @@ public class ExecutableFinder {
       ImmutableCollection<String> fileSuffixes) {
 
     // Fast path out of here.
-    if (isExecutable(suggestedExecutable)) {
+    if (suggestedExecutable.isAbsolute() && isExecutable(suggestedExecutable)) {
       return Optional.of(suggestedExecutable);
     }
 

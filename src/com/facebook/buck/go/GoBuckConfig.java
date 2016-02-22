@@ -26,6 +26,7 @@ import com.facebook.buck.io.ExecutableFinder;
 import com.facebook.buck.util.HumanReadableException;
 import com.facebook.buck.util.ProcessExecutor;
 import com.facebook.buck.util.ProcessExecutorParams;
+import com.facebook.buck.util.environment.Platform;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -47,11 +48,15 @@ public class GoBuckConfig {
 
   private final BuckConfig delegate;
 
+  private ExecutableFinder exeFinder;
   private Supplier<Path> goRootSupplier;
   private Supplier<Path> goToolDirSupplier;
 
   public GoBuckConfig(final BuckConfig delegate, final ProcessExecutor processExecutor) {
     this.delegate = delegate;
+
+    Platform platform = delegate.getPlatform();
+    exeFinder = new ExecutableFinder(platform);
 
     goRootSupplier = Suppliers.memoize(
         new Supplier<Path>() {
@@ -109,7 +114,11 @@ public class GoBuckConfig {
       public Tool get() {
         Optional<Path> toolPath = delegate.getPath("go", configName);
         if (!toolPath.isPresent()) {
-          toolPath = Optional.of(goToolDirSupplier.get().resolve(toolName));
+          toolPath = exeFinder.getOptionalExecutable(Paths.get(toolName), goToolDirSupplier.get());
+          if (!toolPath.isPresent()) {
+            throw new HumanReadableException(
+                "Could not find go tool %s in %s", toolName, goToolDirSupplier.get());
+          }
         }
 
         return new CommandTool.Builder(new HashedFileTool(toolPath.get()))

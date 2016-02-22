@@ -1,4 +1,4 @@
-#@# GENERATED FILE: DO NOT MODIFY 3a3336d6597f5042e969ac04ec3e5c117a86a5c2 #@#
+#@# GENERATED FILE: DO NOT MODIFY 74b1a59bcad9c2cb8a154f13e5cbcf9fcdbe55ee #@#
 {
   "go" : [
     "//src/com/facebook/buck/cli:config",
@@ -17,6 +17,7 @@
     "//src/com/facebook/buck/util:escaper",
     "//src/com/facebook/buck/util:exceptions",
     "//src/com/facebook/buck/util:io",
+    "//src/com/facebook/buck/util/environment:platform",
     "//third-party/java/guava:guava",
     "//third-party/java/infer-annotations:infer-annotations",
     "//third-party/java/jsr:jsr305"

@@ -337,8 +337,7 @@ public class KnownBuildRuleTypesTest {
     addXcodeSelectProcess(processMap, FAKE_XCODE_DEV_PATH);
 
     processMap.putAll(
-        DefaultKnownBuildRuleTypes.getPythonProcessMap(
-            DefaultKnownBuildRuleTypes.getPaths(environment)));
+        DefaultKnownBuildRuleTypes.getPythonProcessMap(environment));
 
     return new FakeProcessExecutor(processMap);
   }
