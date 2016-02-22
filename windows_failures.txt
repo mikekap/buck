@@ -24,6 +24,7 @@
 !com.facebook.buck.apple.xcode.ProjectIntegrationTest
 !com.facebook.buck.artifact_cache.ArtifactCacheBuckConfigTest#testServedCacheInheritsDirAndSizeFromDirCache
 !com.facebook.buck.artifact_cache.ArtifactCacheBuckConfigTest#testServedCacheMode
+!com.facebook.buck.autodeps.DepsForBuildFilesTest
 !com.facebook.buck.cli.AuditClasspathCommandTest#testJsonClassPathOutput
 !com.facebook.buck.cli.AuditInputCommandIntegrationTest
 !com.facebook.buck.cli.AuditInputCommandTest
@@ -43,6 +44,7 @@
 !com.facebook.buck.cli.TargetsCommandIntegrationTest#testOutputPath
 !com.facebook.buck.crosscell.InterCellIntegrationTest#circularCellReferencesAreAllowed
 !com.facebook.buck.cxx.ArchiveStepIntegrationTest#thatGeneratedArchivesAreDeterministic
+!com.facebook.buck.cxx.CxxBinaryDescriptionTest#binaryShouldLinkOwnRequiredLibraries
 !com.facebook.buck.cxx.CxxBinaryIntegrationTest
 !com.facebook.buck.cxx.CxxCompilationDatabaseIntegrationTest
 !com.facebook.buck.cxx.CxxCompilationDatabaseTest
@@ -50,7 +52,7 @@
 !com.facebook.buck.cxx.CxxDependencyFileIntegrationTest
 !com.facebook.buck.cxx.CxxErrorTransformerFactoryTest
 !com.facebook.buck.cxx.CxxGtestTestTest
-!com.facebook.buck.cxx.CxxLibraryIntegrationTest
+!com.facebook.buck.cxx.CxxLibraryDescriptionTest#sharedLibraryShouldLinkOwnRequiredLibraries
 !com.facebook.buck.cxx.CxxLibraryIntegrationTest
 !com.facebook.buck.cxx.CxxLinkIntegrationTest
 !com.facebook.buck.cxx.CxxPreprocessAndCompileIntegrationTest
@@ -68,12 +70,7 @@
 !com.facebook.buck.event.listener.ChromeTraceBuildListenerTest#testDeleteFiles
 !com.facebook.buck.file.StackedDownloaderTest#createDownloadersForEachEntryInTheMavenRepositoriesSection
 !com.facebook.buck.go.GoBinaryIntegrationTest
-!com.facebook.buck.go.GoBinaryIntegrationTest#binaryWithLibrary
-!com.facebook.buck.go.GoBinaryIntegrationTest#libraryWithPrefix
-!com.facebook.buck.go.GoBinaryIntegrationTest#simpleBinary
-!com.facebook.buck.go.GoTestIntegrationTest#testGoPanic
-!com.facebook.buck.go.GoTestIntegrationTest#testGoTest
-!com.facebook.buck.go.GoTestIntegrationTest#testGoTestTimeout
+!com.facebook.buck.go.GoTestIntegrationTest
 !com.facebook.buck.io.DirectoryTraversalTest#testDirectoryTraversalIgnorePaths
 !com.facebook.buck.io.ExecutableFinderTest#testSearchPathsNonExecutableFileIsIgnored
 !com.facebook.buck.io.ExecutableFinderTest#testSearchPathsWithIsExecutableFunctionFailure
@@ -175,5 +172,6 @@
 !com.facebook.buck.util.WatchmanWatcherTest#whenNameThenModifyEventIsGenerated
 !com.facebook.buck.zip.ZipRuleIntegrationTest#shouldUnpackContentsOfASrcJar
 !com.facebook.buck.zip.ZipRuleIntegrationTest#shouldZipSources
+!test.com.facebook.buck.cli.bootstrapper.class_loader_test.ClassLoaderTest
 !src.com.facebook.buck.json.buck_test.TestBuckPosix
 !src.com.facebook.buck.json.buck_test.TestBuckWindows
