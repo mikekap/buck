@@ -18,6 +18,7 @@ package com.facebook.buck.shell;
 
 import com.facebook.buck.event.ConsoleEvent;
 import com.facebook.buck.io.ProjectFilesystem;
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.step.ExecutionContext;
 import com.facebook.buck.step.Step;
 import com.facebook.buck.util.Escaper;
@@ -29,6 +30,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -37,6 +40,7 @@ import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class WorkerShellStep implements Step {
@@ -95,17 +99,55 @@ public class WorkerShellStep implements Step {
     }
   }
 
+  private static ConcurrentMap<String, WorkerProcess> processMap = new ConcurrentHashMap<>();
+  private static Supplier<Void> processMapDestroyer = Suppliers.memoize(new Supplier<Void>() {
+    @Override
+    public Void get() {
+      Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+        @Override
+        public void run() {
+          for (WorkerProcess process : processMap.values()) {
+            try {
+              process.close();
+            } catch (Throwable t) {
+              System.err.println("Failed to finalize processes: " + t);
+            }
+          }
+        }
+      }));
+      return null;
+    }
+  });
+
   /**
    * Returns an existing WorkerProcess for the given key if one exists, else creates a new one.
    */
   private WorkerProcess getWorkerProcessForKey(
       String key,
       ExecutionContext context) throws IOException {
-    ConcurrentMap<String, WorkerProcess> processMap = context.getWorkerProcesses();
+    Sha1HashCode toolHash = getWorkerJobParamsToUse(context.getPlatform()).getToolHash().get();
+    // TODO(mikekap): Make this configurable, somehow.
+    // ConcurrentMap<String, WorkerProcess> processMap = context.getWorkerProcesses();
     WorkerProcess process = processMap.get(key);
+    if (process != null && !process.getProcessHash().equals(toolHash)) {
+      if (processMap.remove(key, process)) {
+        try {
+          process.close();
+        } catch (Throwable t) {
+          context.logError(t, "Failed to close existing process (due to hash change)");
+        }
+        process = null;
+      } else {
+        process = processMap.get(key);
+      }
+    }
+
     if (process != null) {
       return process;
     }
+
+    // Install shutdown hook.
+    processMapDestroyer.get();
 
     ProcessExecutorParams processParams = ProcessExecutorParams.builder()
         .setCommand(getCommand(context.getPlatform()))
@@ -116,7 +158,8 @@ public class WorkerShellStep implements Step {
         context.getProcessExecutor(),
         processParams,
         filesystem,
-        tmpPath);
+        tmpPath,
+        toolHash);
 
     WorkerProcess previousValue = processMap.putIfAbsent(key, newProcess);
     // If putIfAbsent does not return null, then that means another thread beat this thread

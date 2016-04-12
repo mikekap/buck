@@ -21,6 +21,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import com.facebook.buck.io.ProjectFilesystem;
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.testutil.FakeProjectFilesystem;
 import com.facebook.buck.util.FakeProcessExecutor;
 import com.facebook.buck.util.ProcessExecutorParams;
@@ -63,7 +64,8 @@ public class WorkerProcessTest {
         new FakeProcessExecutor(),
         createDummyParams(),
         filesystem,
-        tmpPath);
+        tmpPath,
+        Sha1HashCode.of(""));
     process.setProtocol(new FakeWorkerProcessProtocol());
 
     WorkerJobResult expectedResult = WorkerJobResult.of(exitCode, stdout, stderr);
@@ -79,7 +81,8 @@ public class WorkerProcessTest {
         new FakeProcessExecutor(),
         createDummyParams(),
         new FakeProjectFilesystem(),
-        Paths.get("tmp").toAbsolutePath().normalize());
+        Paths.get("tmp").toAbsolutePath().normalize(),
+        Sha1HashCode.of(""));
     process.setProtocol(protocol);
 
     assertFalse(protocol.isClosed());

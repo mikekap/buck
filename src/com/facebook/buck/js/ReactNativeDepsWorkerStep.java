@@ -17,19 +17,23 @@
 package com.facebook.buck.js;
 
 import com.facebook.buck.io.ProjectFilesystem;
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.shell.WorkerJobParams;
 import com.facebook.buck.shell.WorkerShellStep;
 import com.google.common.base.Optional;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class ReactNativeDepsWorkerStep extends WorkerShellStep {
 
   public ReactNativeDepsWorkerStep(
-      ProjectFilesystem filesystem,
+      final ProjectFilesystem filesystem,
       Path tmpDir,
-      Path jsPackager,
+      final Path jsPackager,
       Optional<String> additionalPackagerFlags,
       ReactNativePlatform platform,
       Path entryFile,
@@ -40,6 +44,16 @@ public class ReactNativeDepsWorkerStep extends WorkerShellStep {
         filesystem.getRootPath(),
         Optional.of(
             WorkerJobParams.of(
+                Suppliers.memoize(new Supplier<Sha1HashCode>() {
+                  @Override
+                  public Sha1HashCode get() {
+                    try {
+                      return Sha1HashCode.of(filesystem.computeSha1(jsPackager));
+                    } catch (IOException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                }),
                 ImmutableList.of(jsPackager.toString()),
                 String.format(
                     "--platform %s%s",

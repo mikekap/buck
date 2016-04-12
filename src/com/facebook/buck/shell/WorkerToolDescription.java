@@ -61,9 +61,10 @@ public class WorkerToolDescription implements Description<WorkerToolDescription.
           args.exe.getFullyQualifiedName());
     }
 
+    SourcePathResolver pathResolver = new SourcePathResolver(resolver);
     return new WorkerTool(
-        params,
-        new SourcePathResolver(resolver),
+        params.appendExtraDeps(((BinaryBuildRule) rule).getExecutableCommand().getDeps(pathResolver)),
+        pathResolver,
         (BinaryBuildRule) rule,
         args.args.or(""));
   }

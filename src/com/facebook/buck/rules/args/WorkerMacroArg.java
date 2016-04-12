@@ -19,6 +19,7 @@ package com.facebook.buck.rules.args;
 import com.facebook.buck.model.BuildTarget;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleResolver;
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.rules.macros.MacroException;
 import com.facebook.buck.rules.macros.MacroHandler;
@@ -27,6 +28,7 @@ import com.facebook.buck.rules.macros.WorkerMacroExpander;
 import com.facebook.buck.shell.WorkerTool;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 
 import java.nio.file.Path;
@@ -83,6 +85,15 @@ public class WorkerMacroArg extends MacroArg {
 
   public ImmutableList<String> getStartupCommand() {
     return startupCommand;
+  }
+
+  public Supplier<Sha1HashCode> getToolHash() {
+    return new Supplier<Sha1HashCode>() {
+      @Override
+      public Sha1HashCode get() {
+        return workerTool.getHash();
+      }
+    };
   }
 
   public String getStartupArgs() {

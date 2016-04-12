@@ -18,6 +18,7 @@ package com.facebook.buck.shell;
 
 import com.facebook.buck.io.ProjectFilesystem;
 import com.facebook.buck.log.Logger;
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.util.ProcessExecutor;
 import com.facebook.buck.util.ProcessExecutorParams;
 import com.google.common.annotations.VisibleForTesting;
@@ -45,6 +46,7 @@ public class WorkerProcess {
   private final ProcessExecutorParams processParams;
   private final ProjectFilesystem filesystem;
   private final Path tmpPath;
+  private final Sha1HashCode processHash;
   private final AtomicInteger currentMessageID = new AtomicInteger();
   private boolean handshakePerformed = false;
   @Nullable
@@ -56,11 +58,17 @@ public class WorkerProcess {
       ProcessExecutor executor,
       ProcessExecutorParams processParams,
       ProjectFilesystem filesystem,
-      Path tmpPath) throws IOException {
+      Path tmpPath,
+      Sha1HashCode processHash) throws IOException {
     this.executor = executor;
     this.processParams = processParams;
     this.filesystem = filesystem;
     this.tmpPath = tmpPath;
+    this.processHash = processHash;
+  }
+
+  public Sha1HashCode getProcessHash() {
+    return processHash;
   }
 
   public synchronized void ensureLaunchAndHandshake() throws IOException {

@@ -15,6 +15,7 @@
  */
 package com.facebook.buck.shell;
 
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.testutil.FakeProjectFilesystem;
 import com.facebook.buck.util.FakeProcessExecutor;
 import com.facebook.buck.util.ProcessExecutorParams;
@@ -36,7 +37,8 @@ public class FakeWorkerProcess extends WorkerProcess {
             .setCommand(ImmutableList.<String>of())
             .build(),
         new FakeProjectFilesystem(),
-        Paths.get("tmp").toAbsolutePath().normalize());
+        Paths.get("tmp").toAbsolutePath().normalize(),
+        Sha1HashCode.of(""));
     this.jobArgsToJobResultMap = jobArgsToJobResultMap;
     this.setProtocol(new FakeWorkerProcessProtocol());
   }

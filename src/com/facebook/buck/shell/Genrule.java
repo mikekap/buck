@@ -349,6 +349,7 @@ public class Genrule extends AbstractBuildRule
               public WorkerJobParams apply(Arg arg) {
                 WorkerMacroArg workerMacroArg = (WorkerMacroArg) arg;
                 return WorkerJobParams.of(
+                    workerMacroArg.getToolHash(),
                     workerMacroArg.getStartupCommand(),
                     workerMacroArg.getStartupArgs(),
                     workerMacroArg.getJobArgs());

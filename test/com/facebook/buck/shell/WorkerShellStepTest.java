@@ -24,6 +24,7 @@ import com.facebook.buck.event.BuckEventBus;
 import com.facebook.buck.event.BuckEventBusFactory;
 import com.facebook.buck.event.ConsoleEvent;
 import com.facebook.buck.event.FakeBuckEventListener;
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.step.ExecutionContext;
 import com.facebook.buck.step.TestExecutionContext;
 import com.facebook.buck.testutil.FakeProjectFilesystem;
@@ -33,6 +34,7 @@ import com.facebook.buck.util.HumanReadableException;
 import com.facebook.buck.util.Verbosity;
 import com.facebook.buck.util.environment.Platform;
 import com.google.common.base.Optional;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -72,7 +74,7 @@ public class WorkerShellStepTest {
       ImmutableList<String> startupCommand,
       String startupArgs,
       String jobArgs) {
-    return WorkerJobParams.of(startupCommand, startupArgs, jobArgs);
+    return WorkerJobParams.of(Suppliers.ofInstance(Sha1HashCode.of("")), startupCommand, startupArgs, jobArgs);
   }
 
   @Test

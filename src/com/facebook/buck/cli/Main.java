@@ -371,7 +371,7 @@ public final class Main {
           if (isSessionLeader && commandSemaphoreNgClient.orNull() == context) {
             LOG.info("killing background processes on client disconnection");
             // Process no longer wants work done on its behalf.
-            BgProcessKiller.killBgProcesses();
+            //BgProcessKiller.killBgProcesses();
           }
 
           // Synchronize on parser object so that the main command processing thread is not

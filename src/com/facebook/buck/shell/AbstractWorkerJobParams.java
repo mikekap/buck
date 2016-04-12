@@ -16,7 +16,9 @@
 
 package com.facebook.buck.shell;
 
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.util.immutables.BuckStyleTuple;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 
 import org.immutables.value.Value;
@@ -24,6 +26,8 @@ import org.immutables.value.Value;
 @Value.Immutable
 @BuckStyleTuple
 interface AbstractWorkerJobParams {
+  @Value.Parameter
+  Supplier<Sha1HashCode> getToolHash();
   @Value.Parameter
   ImmutableList<String> getStartupCommand();
   @Value.Parameter

@@ -16,15 +16,30 @@
 
 package com.facebook.buck.shell;
 
+import com.facebook.buck.model.BuildTargets;
+import com.facebook.buck.rules.AbstractBuildRule;
 import com.facebook.buck.rules.BinaryBuildRule;
+import com.facebook.buck.rules.BuildContext;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
+import com.facebook.buck.rules.BuildableContext;
 import com.facebook.buck.rules.HasRuntimeDeps;
-import com.facebook.buck.rules.NoopBuildRule;
+import com.facebook.buck.rules.Sha1HashCode;
 import com.facebook.buck.rules.SourcePathResolver;
+import com.facebook.buck.step.Step;
+import com.facebook.buck.step.fs.WriteFileStep;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 
-public class WorkerTool extends NoopBuildRule implements HasRuntimeDeps {
+import java.io.IOException;
+import java.nio.file.Path;
+
+import javax.annotation.Nullable;
+
+public class WorkerTool extends AbstractBuildRule
+    implements HasRuntimeDeps {
 
   private final BinaryBuildRule exe;
   private final String args;
@@ -43,6 +58,10 @@ public class WorkerTool extends NoopBuildRule implements HasRuntimeDeps {
     return this.exe;
   }
 
+  public Sha1HashCode getHash() {
+    return Sha1HashCode.of(getProjectFilesystem().readFirstLine(getPathToOutput()).get());
+  }
+
   public String getArgs() {
     return this.args;
   }
@@ -53,5 +72,34 @@ public class WorkerTool extends NoopBuildRule implements HasRuntimeDeps {
         .add(exe)
         .addAll(exe.getExecutableCommand().getDeps(getResolver()))
         .build();
+  }
+
+  @Override
+  public ImmutableList<Step> getBuildSteps(
+      BuildContext context, BuildableContext buildableContext) {
+    Hasher hasher = Hashing.sha1().newHasher();
+    for (BuildRule rule : getRuntimeDeps()) {
+      hasher.putUnencodedChars(rule.getFullyQualifiedName());
+      try {
+        hasher.putUnencodedChars(getProjectFilesystem().computeSha1(rule.getPathToOutput()));
+      } catch (IOException e) {
+        context.logError(e, "Error hashing input rule: %s", rule);
+        return ImmutableList.of();
+      }
+    }
+
+    String inputsHash = hasher.hash().toString();
+    return ImmutableList.<Step>of(
+        new WriteFileStep(
+            getProjectFilesystem(),
+            inputsHash,
+            getPathToOutput(),
+            /* executable */ false));
+  }
+
+  @Nullable
+  @Override
+  public Path getPathToOutput() {
+    return BuildTargets.getScratchPath(getBuildTarget(), "__%s__runtime_hash");
   }
 }
