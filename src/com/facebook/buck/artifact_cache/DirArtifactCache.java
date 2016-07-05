@@ -81,6 +81,7 @@ public class DirArtifactCache implements ArtifactCache {
     this.doStore = doStore;
     this.bytesSinceLastDeleteOldFiles = 0L;
     filesystem.mkdirs(cacheDir);
+    deleteOldFiles();
   }
 
   @Override
