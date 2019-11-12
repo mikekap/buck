@@ -80,7 +80,7 @@ public class CustomZipOutputStream extends OutputStream {
   private void validateEntry(ZipEntry entry) {
     if (entry.getMethod() == ZipEntry.STORED) {
       Preconditions.checkState(
-          entry.getCompressedSize() == entry.getSize(),
+          entry.getCompressedSize() == entry.getSize() || entry.getCompressedSize() == -1,
           "STORED entry where compressed != uncompressed size");
     }
   }

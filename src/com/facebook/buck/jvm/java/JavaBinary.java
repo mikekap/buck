@@ -77,6 +77,8 @@ public class JavaBinary extends AbstractBuildRuleWithDeclaredAndExtraDeps
   @AddToRuleKey
   private final ImmutableSet<Pattern> blacklist;
 
+  private int compressionLevel;
+
   private final PatternsMatcher blacklistPatternsMatcher;
 
   private final ImmutableSet<JavaLibrary> transitiveClasspathDeps;
@@ -96,6 +98,7 @@ public class JavaBinary extends AbstractBuildRuleWithDeclaredAndExtraDeps
       boolean disallowAllDuplicates,
       @Nullable Path metaInfDirectory,
       ImmutableSet<Pattern> blacklist,
+      int compressionLevel,
       ImmutableSet<JavaLibrary> transitiveClasspathDeps,
       ImmutableSet<SourcePath> transitiveClasspaths,
       boolean cache,
@@ -112,6 +115,7 @@ public class JavaBinary extends AbstractBuildRuleWithDeclaredAndExtraDeps
             : null;
     this.blacklist = blacklist;
     blacklistPatternsMatcher = new PatternsMatcher(blacklist);
+    this.compressionLevel = compressionLevel;
     this.transitiveClasspathDeps = transitiveClasspathDeps;
     this.transitiveClasspaths = transitiveClasspaths;
     this.cache = cache;
@@ -172,6 +176,7 @@ public class JavaBinary extends AbstractBuildRuleWithDeclaredAndExtraDeps
                 .setMergeManifests(mergeManifests)
                 .setDisallowAllDuplicates(disallowAllDuplicates)
                 .setDuplicatesLogLevel(duplicatesLogLevel)
+                .setCompressionLevel(compressionLevel)
                 .setRemoveEntryPredicate(
                     entry ->
                         blacklistPatternsMatcher.substringMatches(((ZipEntry) entry).getName()))

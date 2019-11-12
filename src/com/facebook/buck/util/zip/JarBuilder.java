@@ -71,6 +71,7 @@ public class JarBuilder {
   private List<JarEntryContainer> sourceContainers = new ArrayList<>();
   private Set<String> alreadyAddedEntries = new HashSet<>();
   private Map<String, Set<String>> services = new HashMap<>();
+  private int compressionLevel = -1;
 
   public JarBuilder setObserver(Observer observer) {
     this.observer = observer;
@@ -97,6 +98,11 @@ public class JarBuilder {
 
   public JarBuilder addEntryContainer(JarEntryContainer container) {
     sourceContainers.add(container);
+    return this;
+  }
+
+  public JarBuilder setCompressionLevel(int compressionLevel) {
+    this.compressionLevel = compressionLevel;
     return this;
   }
 
@@ -275,6 +281,13 @@ public class JarBuilder {
       return;
     }
 
+    if (compressionLevel != -1) {
+      entry.setCompressionLevel(compressionLevel);
+      // Set the compressed size to -1 to force a data descriptor entry - i.e. one that has
+      // the metadata in the footer rather than the header. This will normally happen anyway
+      // for compressed streams, but not for compressionLevel == 0 (i.e. no compression).
+      entry.setCompressedSize(-1);
+    }
     jar.putNextEntry(entry);
     try (InputStream entryInputStream = entrySupplier.getInputStreamSupplier().get()) {
       if (entryInputStream != null) {

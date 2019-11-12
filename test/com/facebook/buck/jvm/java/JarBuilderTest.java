@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import com.facebook.buck.util.types.Pair;
 import com.facebook.buck.util.zip.CustomZipEntry;
 import com.facebook.buck.util.zip.JarBuilder;
 import com.facebook.buck.util.zip.JarEntryContainer;
@@ -88,6 +89,29 @@ public class JarBuilderTest {
               "Dog",
               "Foo"),
           jarFile.stream().map(JarEntry::getName).collect(Collectors.toList()));
+    }
+  }
+
+  @Test
+  public void testRecompression() throws IOException {
+    File tempFile = temporaryFolder.newFile();
+    try (TestJarEntryContainer container1 = new TestJarEntryContainer("Container1")) {
+      new JarBuilder()
+          .setCompressionLevel(0)
+          .addEntryContainer(container1.addEntry("Foo", "Foo").addEntry("Bar", "Bar"))
+          .createJarFile(tempFile.toPath());
+    }
+
+    try (JarFile jarFile = new JarFile(tempFile)) {
+      assertEquals(
+          ImmutableList.of(
+              new Pair<>("META-INF/", 2L),
+              new Pair<>("META-INF/MANIFEST.MF", 27L),
+              new Pair<>("Bar", 3L),
+              new Pair<>("Foo", 3L)),
+          jarFile.stream()
+              .map(v -> new Pair<>(v.getName(), v.getCompressedSize()))
+              .collect(Collectors.toList()));
     }
   }
 

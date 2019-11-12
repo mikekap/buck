@@ -86,6 +86,7 @@ public class JarDirectoryStep implements Step {
             .setShouldDisallowAllDuplicates(parameters.getDisallowAllDuplicates())
             .setShouldHashEntries(parameters.getHashEntries())
             .setRemoveEntryPredicate(parameters.getRemoveEntryPredicate())
+            .setCompressionLevel(parameters.getCompressionLevel())
             .createJarFile(filesystem.resolve(parameters.getJarPath())));
   }
 }

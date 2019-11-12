@@ -94,6 +94,7 @@ public class JavaBinaryTest {
                 false,
                 null,
                 /* blacklist */ ImmutableSet.of(),
+                -1,
                 ImmutableSet.of(),
                 ImmutableSet.of(),
                 /* cache */ true,

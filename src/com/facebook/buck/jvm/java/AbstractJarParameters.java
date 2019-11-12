@@ -59,4 +59,9 @@ abstract class AbstractJarParameters {
   public Level getDuplicatesLogLevel() {
     return Level.INFO;
   }
+
+  @Value.Default
+  public int getCompressionLevel() {
+    return -1;
+  }
 }

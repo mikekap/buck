@@ -217,6 +217,7 @@ public class JavaTestDescription
               false,
               null,
               ImmutableSet.of(),
+              -1,
               transitiveClasspathDeps,
               transitiveClasspaths,
               javaBuckConfig.shouldCacheBinaries(),

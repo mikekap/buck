@@ -81,7 +81,6 @@ public class RobolectricTestDescription
     implements DescriptionWithTargetGraph<RobolectricTestDescriptionArg>,
         ImplicitDepsInferringDescription<RobolectricTestDescriptionArg> {
 
-
   private final ToolchainProvider toolchainProvider;
   private final JavaBuckConfig javaBuckConfig;
   private final AndroidLibraryCompilerFactory compilerFactory;
@@ -194,7 +193,6 @@ public class RobolectricTestDescription
     ImmutableList<Arg> vmArgs =
         ImmutableList.copyOf(Lists.transform(args.getVmArgs(), macrosConverter::convert));
 
-
     Optional<DummyRDotJava> dummyRDotJava =
         graphEnhancer.getBuildableForAndroidResources(
             graphBuilder, /* createBuildableIfEmpty */ true);
@@ -290,6 +288,7 @@ public class RobolectricTestDescription
               false,
               null,
               ImmutableSet.of(),
+              -1,
               transitiveClasspathDeps,
               transitiveClasspaths,
               javaBuckConfig.shouldCacheBinaries(),
@@ -393,6 +392,5 @@ public class RobolectricTestDescription
     default boolean isForceFinalResourceIds() {
       return true;
     }
-
   }
 }
